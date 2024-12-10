@@ -4,18 +4,19 @@ from contextlib import asynccontextmanager
 import asyncio
 import os
 import time
-
+import kafka
 import aiohttp
 from fastapi import FastAPI
 
 import cool_errs
 import data
+import spotify_kafka
 
 token: data.Token = data.Token.new_placeholder_token()
-
-
 logger = logging.Logger("uvicorn.error")
 logger.setLevel(logging.INFO)
+
+my_client = spotify_kafka.SpotifyKafka("kafka:9092", "ARTISTID", "ARTIST")
 
 if not logger.hasHandlers():
     console_handler = logging.StreamHandler()
@@ -44,14 +45,19 @@ async def fetch_artist(artist_req: data.ArtistRequest, session: aiohttp.ClientSe
         return data.Artist(**response_json)
 
 
+
 def get_artist_id() -> data.ArtistRequest:
     # kafka consumer goes here
-    return data.ArtistRequest(id="0TnOYISbd1XYRBk9myaseg")
+    msg = my_client.get_one_message()
+    id = msg.value.decode()
+    logger.info(f"Received message: {id}")
+    return data.ArtistRequest(id=id)
 
 
 def produce_artist(artist: data.Artist):
     # kafka producer goes here
     logger.info(artist)
+    my_client.produce(str(artist))
 
 
 @asynccontextmanager
@@ -90,7 +96,7 @@ async def start_token_loop():
         while time.monotonic_ns() - start_time < loop_time:
             await asyncio.sleep(0.1)
 
-app = FastAPI(docs_url=None, redoc_url=None, lifespan=lifespan)
+app = FastAPI(docs_url="/docs", redoc_url=None, lifespan=lifespan)
 
 @app.post("/new-token/{provided_token}")
 def new_token(provided_token: str):
@@ -107,6 +113,7 @@ def new_token(provided_token: str):
         pod_name = os.getenv("POD_NAME")
         stateful_set_name = pod_name[:pod_name.rfind("-")]
         pod_number = int(pod_name[pod_name.rfind("-") + 1:])
+        print(f"Pod name: {pod_name} - Stateful set name: {stateful_set_name} - Pod number: {pod_number}")
         try:
             # Try next pod in the stateful set
             msg = aiohttp.ClientSession(timeout=1).get(
@@ -129,6 +136,5 @@ if __name__ == '__main__':
     print(pod_name[:pod_name.rfind("-")])
     pod_number = int(pod_name[pod_name.rfind("-") + 1:])
     print(pod_number)
-    #import uvicorn
-#
- #   uvicorn.run(app, host="localhost", port=5000)
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=5000)
