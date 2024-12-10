@@ -40,13 +40,7 @@ class Image:
 
 @dataclass
 class Artist:
-    external_urls: ExternalUrls
-    followers: Followers
     genres: List[str]
-    href: str
-    id: str
-    images: List[Image]
     name: str
     popularity: int
-    type: str
     uri: str
