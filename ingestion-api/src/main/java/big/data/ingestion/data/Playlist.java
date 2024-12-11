@@ -29,4 +29,12 @@ public class Playlist {
     public int getPid() {
         return pid;
     }
+
+    public int getNumFollowers() {
+        return numFollowers;
+    }
+
+    public List<Track> getTracks() {
+        return tracks;
+    }
 }
