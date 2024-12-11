@@ -12,7 +12,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafkaStreams;
 import org.springframework.kafka.core.KafkaTemplate;
 
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 @Configuration
 @EnableKafkaStreams
@@ -32,7 +34,7 @@ public class KafkaStreamsConfig {
         KStream<String, String> stream = streamsBuilder.stream("INGESTION");
 
         // Process the stream
-        KStream<String, String> processedStream = stream
+        KStream<String, String> filteredStream = stream
                 .filter((key, value) -> {
                     try {
                         // Deserialize JSON to Playlist object
@@ -43,25 +45,29 @@ public class KafkaStreamsConfig {
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException("Failed to deserialize playlist", e);
                     }
-                })
-                .peek((key, value) -> {
-                    try {
-                        // Deserialize Playlist
-                        Playlist playlist = objectMapper.readValue(value, Playlist.class);
-
-                        // Publish artist IDs to ARTISTID topic
-                        playlist.getTracks().forEach(track -> {
-                            String artistUri = track.getArtistUri(); // Assuming artistUri is the ID
-                            kafkaTemplate.send("ARTISTID", artistUri); // Publish to ARTISTID topic
-                            System.out.println("Published artist uri: " + artistUri);
-                        });
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException("Failed to process playlist", e);
-                    }
                 });
 
-        // Publish processed playlists to PLAYLISTS topic
-        processedStream.to("PLAYLISTS");
+        // Extract unique artist URIs and publish to ARTISTID
+        filteredStream.foreach((key, value) -> {
+            try {
+                Playlist playlist = objectMapper.readValue(value, Playlist.class);
+
+                // Use a Set to deduplicate artist URIs
+                Set<String> uniqueArtistUris = new HashSet<>();
+                playlist.getTracks().forEach(track -> uniqueArtistUris.add(track.getArtistUri()));
+
+                // Publish each unique artist URI to ARTISTID
+                uniqueArtistUris.forEach(artistUri -> {
+                    kafkaTemplate.send("ARTISTID", artistUri);
+                    System.out.println("Published artist URI: " + artistUri);
+                });
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to process playlist for artist URIs", e);
+            }
+        });
+
+        // Keep the filtered playlists in the INGESTION topic
+        filteredStream.to("INGESTION");
 
         return stream;
     }

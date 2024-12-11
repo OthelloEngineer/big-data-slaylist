@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/ingest")
@@ -25,33 +27,63 @@ public class IngestionController {
     }
 
     @PostMapping("/initial-dataset")
-    public ResponseEntity<String> processInitialDataset(@RequestBody List<Playlist> playlists) {
+    public ResponseEntity<String> processInitialDataset(@RequestBody PlaylistFileWrapper fileWrapper) {
+        // Log the "info" field for debugging or monitoring
+        PlaylistFileWrapper.Info info = fileWrapper.getInfo();
+        System.out.println("Processing dataset:");
+        System.out.println("Generated on: " + info.getGeneratedOn());
+        System.out.println("Slice: " + info.getSlice());
+        System.out.println("Version: " + info.getVersion());
+
+        // Extract playlists from the wrapper
+        List<Playlist> playlists = fileWrapper.getPlaylists();
+
+        // Process each playlist
         playlists.forEach(playlist -> {
             try {
-                // Serialize Playlist to JSON and send to Kafka
-                String playlistJson = objectMapper.writeValueAsString(playlist);
-                kafkaTemplate.send("raw-playlists-topic", playlistJson);
+                // Filter playlists with fewer than 10 followers
+                if (playlist.getNumFollowers() >= 10) {
+                    // Serialize and send playlist to INGESTION topic
+                    String playlistJson = objectMapper.writeValueAsString(playlist);
+                    kafkaTemplate.send("INGESTION", playlistJson);
+
+                    // Extract unique artist URIs and send to ARTISTID topic
+                    Set<String> uniqueArtistUris = new HashSet<>();
+                    playlist.getTracks().forEach(track -> uniqueArtistUris.add(track.getArtistUri()));
+                    uniqueArtistUris.forEach(artistUri -> {
+                        kafkaTemplate.send("ARTISTID", artistUri);
+                        System.out.println("Published artist URI: " + artistUri);
+                    });
+                }
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Failed to serialize playlist", e);
             }
         });
 
-        return ResponseEntity.ok("Playlists sent to Kafka topic 'raw-playlists-topic'");
+        return ResponseEntity.ok("Playlists and artist URIs processed and published to Kafka topics.");
     }
 
     @PostMapping("/user-playlist")
     public ResponseEntity<String> processUserPlaylist(@RequestBody Playlist playlist) {
         try {
-            // Serialize Playlist to JSON and send to Kafka
-            String playlistJson = objectMapper.writeValueAsString(playlist);
-            kafkaTemplate.send("raw-playlists-topic", playlistJson);
+            // Filter playlists with fewer than 10 followers
+            if (playlist.getNumFollowers() >= 10) {
+                // Serialize and send playlist to INGESTION topic
+                String playlistJson = objectMapper.writeValueAsString(playlist);
+                kafkaTemplate.send("INGESTION", playlistJson);
+
+                // Extract unique artist URIs and send to ARTISTID topic
+                Set<String> uniqueArtistUris = new HashSet<>();
+                playlist.getTracks().forEach(track -> uniqueArtistUris.add(track.getArtistUri()));
+                uniqueArtistUris.forEach(artistUri -> {
+                    kafkaTemplate.send("ARTISTID", artistUri);
+                    System.out.println("Published artist URI: " + artistUri);
+                });
+            }
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize playlist", e);
         }
 
-        return ResponseEntity.ok("User playlist sent to Kafka topic 'raw-playlists-topic'");
+        return ResponseEntity.ok("User playlist processed and published to Kafka topics.");
     }
-
-
-
 }

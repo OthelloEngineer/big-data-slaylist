@@ -9,7 +9,9 @@ public class Track {
     private long durationMs;
     private String albumName;
 
-    public Track(int pos, String artistName, String trackUri, String artistUri, String trackName, String albumUri, long durationMs, String albumName) {
+    private Artist artist; // Add the Artist object to the Track
+
+    public Track(String artistName, String trackUri, String artistUri, String trackName, String albumUri, long durationMs, String albumName) {
         this.artistName = artistName;
         this.trackUri = trackUri;
         this.artistUri = artistUri;
@@ -21,5 +23,9 @@ public class Track {
 
     public String getArtistUri() {
         return artistUri;
+    }
+
+    public void setArtist(Artist artist) {
+        this.artist = artist;
     }
 }
