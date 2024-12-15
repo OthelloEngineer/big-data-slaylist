@@ -2,6 +2,7 @@
 // NO CHECKED-IN PROTOBUF GENCODE
 // source: playlist.proto
 // Protobuf Java Version: 4.29.1
+package big.data.ingestion.data;
 
 public final class PlaylistOuterClass {
   private PlaylistOuterClass() {}
