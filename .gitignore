@@ -115,7 +115,7 @@ pip-selfcheck.json
 **/.idea/*
 # AWS User-specific
 .idea/**/aws.xml
-
+spotify-api/.idea
 # Generated files
 .idea/**/contentModel.xml
 

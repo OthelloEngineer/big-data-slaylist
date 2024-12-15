@@ -1,0 +1,137 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    cni.projectcalico.org/containerID: a426b14bf453d534e88a4a59f582dbba968bfac170a5fb9f38baea65c24d655a
+    cni.projectcalico.org/podIP: 10.1.155.235/32
+    cni.projectcalico.org/podIPs: 10.1.155.235/32
+    kubectl.kubernetes.io/restartedAt: "2024-12-10T10:23:43+01:00"
+  creationTimestamp: "2024-12-10T09:23:47Z"
+  generateName: spotifyapi-
+  labels:
+    app: spotifyapi
+    apps.kubernetes.io/pod-index: "0"
+    controller-revision-hash: spotifyapi-65b77ff97f
+    statefulset.kubernetes.io/pod-name: spotifyapi-0
+  name: spotifyapi-0
+  namespace: group-08
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: StatefulSet
+    name: spotifyapi
+    uid: fb260369-6b59-46cc-9228-e3711dd6d71e
+  resourceVersion: "7745605"
+  uid: e5d4922c-c6cd-4229-b0f7-e49d8358845b
+spec:
+  containers:
+  - env:
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.name
+    image: othelloengineer/bigdata-spotify-api:0.0.2
+    imagePullPolicy: Always
+    name: spotifyapi
+    ports:
+    - containerPort: 5000
+      name: web
+      protocol: TCP
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-kckdg
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  hostname: spotifyapi-0
+  nodeName: leftover.tek.sdu.dk
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: default
+  serviceAccountName: default
+  subdomain: spotifyapi
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: kube-api-access-kckdg
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2024-12-10T09:23:50Z"
+    status: "True"
+    type: PodReadyToStartContainers
+  - lastProbeTime: null
+    lastTransitionTime: "2024-12-10T09:23:47Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2024-12-10T09:23:50Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2024-12-10T09:23:50Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2024-12-10T09:23:47Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: containerd://da4cdb50ce46a316bd6a67e2c54d9b4a1e49d2752d14174767c52f72dd517f37
+    image: docker.io/othelloengineer/bigdata-spotify-api:0.0.2
+    imageID: docker.io/othelloengineer/bigdata-spotify-api@sha256:abde30542e59fc8248179ab38882aebe0d1cf80be8422cb58f9a5f1b2e94249a
+    lastState: {}
+    name: spotifyapi
+    ready: true
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2024-12-10T09:23:50Z"
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-kckdg
+      readOnly: true
+      recursiveReadOnly: Disabled
+  hostIP: 10.123.3.156
+  hostIPs:
+  - ip: 10.123.3.156
+  phase: Running
+  podIP: 10.1.155.235
+  podIPs:
+  - ip: 10.1.155.235
+  qosClass: BestEffort
+  startTime: "2024-12-10T09:23:47Z"

@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: spotifyapi
+spec:
+  selector:
+    matchLabels:
+      app: spotifyapi
+  serviceName: spotifyapi
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: spotifyapi
+    spec:
+      containers:
+      - name: spotifyapi
+        image: othelloengineer/bigdata-spotify-api:0.0.2
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+          name: web
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: spotifyapi-svc
+spec:
+  selector:
+    app: spotifyapi
+  ports:
+  - port: 5000
+    targetPort: 5000
