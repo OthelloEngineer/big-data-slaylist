@@ -2,6 +2,7 @@ import string
 from dataclasses import dataclass
 import random
 from sys import getsizeof
+import time
 from typing import List
 
 
@@ -13,8 +14,11 @@ class Artist:
     uri: str
 
 
+
 if __name__ == "__main__":
     my_artists = []
+
+    start_time = time.monotonic_ns()
 
     for i in range(298000):
         my_genre = [''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))]
@@ -25,7 +29,9 @@ if __name__ == "__main__":
         artist = Artist(my_genre, my_name, my_popul, uri)
 
         my_artists.append(artist)
-        print(artist)
 
-    print(len(my_artists))
-    print(getsizeof(my_artists))
+    end_time = time.monotonic_ns()
+
+    print(f"Time taken: {(end_time - start_time)/1_000_000_000}s")
+    print(f"len: {len(my_artists)}")
+    print(f" size, bytes: {getsizeof(my_artists)}")
