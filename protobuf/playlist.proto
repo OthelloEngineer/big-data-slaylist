@@ -21,7 +21,16 @@ message Playlist {
     int32 num_artists = 4;
     int32 num_songs = 5;
     int32 num_albums = 6;
+    
+    enum Origin {
+        USER = 0;
+        DATASET = 1;
+        SPOTIFY_TOP = 2;
+    }
+
+    Origin origin = 7;
 }
+
 
 
 message ArtistRequest {

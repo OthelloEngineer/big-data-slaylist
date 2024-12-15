@@ -1,4 +1,5 @@
 from google.protobuf.internal import containers as _containers
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
@@ -30,20 +31,30 @@ class Artist(_message.Message):
     def __init__(self, artist_name: _Optional[str] = ..., artist_uri: _Optional[str] = ..., genres: _Optional[_Iterable[str]] = ..., popularity: _Optional[int] = ...) -> None: ...
 
 class Playlist(_message.Message):
-    __slots__ = ("songs", "playlist_name", "followers", "num_artists", "num_songs", "num_albums")
+    __slots__ = ("songs", "playlist_name", "followers", "num_artists", "num_songs", "num_albums", "origin")
+    class Origin(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+        __slots__ = ()
+        USER: _ClassVar[Playlist.Origin]
+        DATASET: _ClassVar[Playlist.Origin]
+        SPOTIFY_TOP: _ClassVar[Playlist.Origin]
+    USER: Playlist.Origin
+    DATASET: Playlist.Origin
+    SPOTIFY_TOP: Playlist.Origin
     SONGS_FIELD_NUMBER: _ClassVar[int]
     PLAYLIST_NAME_FIELD_NUMBER: _ClassVar[int]
     FOLLOWERS_FIELD_NUMBER: _ClassVar[int]
     NUM_ARTISTS_FIELD_NUMBER: _ClassVar[int]
     NUM_SONGS_FIELD_NUMBER: _ClassVar[int]
     NUM_ALBUMS_FIELD_NUMBER: _ClassVar[int]
+    ORIGIN_FIELD_NUMBER: _ClassVar[int]
     songs: _containers.RepeatedCompositeFieldContainer[Song]
     playlist_name: str
     followers: int
     num_artists: int
     num_songs: int
     num_albums: int
-    def __init__(self, songs: _Optional[_Iterable[_Union[Song, _Mapping]]] = ..., playlist_name: _Optional[str] = ..., followers: _Optional[int] = ..., num_artists: _Optional[int] = ..., num_songs: _Optional[int] = ..., num_albums: _Optional[int] = ...) -> None: ...
+    origin: Playlist.Origin
+    def __init__(self, songs: _Optional[_Iterable[_Union[Song, _Mapping]]] = ..., playlist_name: _Optional[str] = ..., followers: _Optional[int] = ..., num_artists: _Optional[int] = ..., num_songs: _Optional[int] = ..., num_albums: _Optional[int] = ..., origin: _Optional[_Union[Playlist.Origin, str]] = ...) -> None: ...
 
 class ArtistRequest(_message.Message):
     __slots__ = ("artist_uri",)

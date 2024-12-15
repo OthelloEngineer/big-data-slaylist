@@ -2045,6 +2045,17 @@ public final class PlaylistOuterClass {
      * @return The numAlbums.
      */
     int getNumAlbums();
+
+    /**
+     * <code>.Playlist.Origin origin = 7;</code>
+     * @return The enum numeric value on the wire for origin.
+     */
+    int getOriginValue();
+    /**
+     * <code>.Playlist.Origin origin = 7;</code>
+     * @return The origin.
+     */
+    PlaylistOuterClass.Playlist.Origin getOrigin();
   }
   /**
    * Protobuf type {@code Playlist}
@@ -2070,6 +2081,7 @@ public final class PlaylistOuterClass {
     private Playlist() {
       songs_ = java.util.Collections.emptyList();
       playlistName_ = "";
+      origin_ = 0;
     }
 
     public static final com.google.protobuf.Descriptors.Descriptor
@@ -2083,6 +2095,132 @@ public final class PlaylistOuterClass {
       return PlaylistOuterClass.internal_static_Playlist_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               PlaylistOuterClass.Playlist.class, PlaylistOuterClass.Playlist.Builder.class);
+    }
+
+    /**
+     * Protobuf enum {@code Playlist.Origin}
+     */
+    public enum Origin
+        implements com.google.protobuf.ProtocolMessageEnum {
+      /**
+       * <code>USER = 0;</code>
+       */
+      USER(0),
+      /**
+       * <code>DATASET = 1;</code>
+       */
+      DATASET(1),
+      /**
+       * <code>SPOTIFY_TOP = 2;</code>
+       */
+      SPOTIFY_TOP(2),
+      UNRECOGNIZED(-1),
+      ;
+
+      static {
+        com.google.protobuf.RuntimeVersion.validateProtobufGencodeVersion(
+          com.google.protobuf.RuntimeVersion.RuntimeDomain.PUBLIC,
+          /* major= */ 4,
+          /* minor= */ 29,
+          /* patch= */ 1,
+          /* suffix= */ "",
+          Origin.class.getName());
+      }
+      /**
+       * <code>USER = 0;</code>
+       */
+      public static final int USER_VALUE = 0;
+      /**
+       * <code>DATASET = 1;</code>
+       */
+      public static final int DATASET_VALUE = 1;
+      /**
+       * <code>SPOTIFY_TOP = 2;</code>
+       */
+      public static final int SPOTIFY_TOP_VALUE = 2;
+
+
+      public final int getNumber() {
+        if (this == UNRECOGNIZED) {
+          throw new java.lang.IllegalArgumentException(
+              "Can't get the number of an unknown enum value.");
+        }
+        return value;
+      }
+
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
+      public static Origin valueOf(int value) {
+        return forNumber(value);
+      }
+
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       */
+      public static Origin forNumber(int value) {
+        switch (value) {
+          case 0: return USER;
+          case 1: return DATASET;
+          case 2: return SPOTIFY_TOP;
+          default: return null;
+        }
+      }
+
+      public static com.google.protobuf.Internal.EnumLiteMap<Origin>
+          internalGetValueMap() {
+        return internalValueMap;
+      }
+      private static final com.google.protobuf.Internal.EnumLiteMap<
+          Origin> internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<Origin>() {
+              public Origin findValueByNumber(int number) {
+                return Origin.forNumber(number);
+              }
+            };
+
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+          getValueDescriptor() {
+        if (this == UNRECOGNIZED) {
+          throw new java.lang.IllegalStateException(
+              "Can't get the descriptor of an unrecognized enum value.");
+        }
+        return getDescriptor().getValues().get(ordinal());
+      }
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptorForType() {
+        return getDescriptor();
+      }
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptor() {
+        return PlaylistOuterClass.Playlist.getDescriptor().getEnumTypes().get(0);
+      }
+
+      private static final Origin[] VALUES = values();
+
+      public static Origin valueOf(
+          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+        if (desc.getType() != getDescriptor()) {
+          throw new java.lang.IllegalArgumentException(
+            "EnumValueDescriptor is not for this type.");
+        }
+        if (desc.getIndex() == -1) {
+          return UNRECOGNIZED;
+        }
+        return VALUES[desc.getIndex()];
+      }
+
+      private final int value;
+
+      private Origin(int value) {
+        this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:Playlist.Origin)
     }
 
     public static final int SONGS_FIELD_NUMBER = 1;
@@ -2209,6 +2347,24 @@ public final class PlaylistOuterClass {
       return numAlbums_;
     }
 
+    public static final int ORIGIN_FIELD_NUMBER = 7;
+    private int origin_ = 0;
+    /**
+     * <code>.Playlist.Origin origin = 7;</code>
+     * @return The enum numeric value on the wire for origin.
+     */
+    @java.lang.Override public int getOriginValue() {
+      return origin_;
+    }
+    /**
+     * <code>.Playlist.Origin origin = 7;</code>
+     * @return The origin.
+     */
+    @java.lang.Override public PlaylistOuterClass.Playlist.Origin getOrigin() {
+      PlaylistOuterClass.Playlist.Origin result = PlaylistOuterClass.Playlist.Origin.forNumber(origin_);
+      return result == null ? PlaylistOuterClass.Playlist.Origin.UNRECOGNIZED : result;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -2240,6 +2396,9 @@ public final class PlaylistOuterClass {
       }
       if (numAlbums_ != 0) {
         output.writeInt32(6, numAlbums_);
+      }
+      if (origin_ != PlaylistOuterClass.Playlist.Origin.USER.getNumber()) {
+        output.writeEnum(7, origin_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -2273,6 +2432,10 @@ public final class PlaylistOuterClass {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(6, numAlbums_);
       }
+      if (origin_ != PlaylistOuterClass.Playlist.Origin.USER.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(7, origin_);
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -2300,6 +2463,7 @@ public final class PlaylistOuterClass {
           != other.getNumSongs()) return false;
       if (getNumAlbums()
           != other.getNumAlbums()) return false;
+      if (origin_ != other.origin_) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -2325,6 +2489,8 @@ public final class PlaylistOuterClass {
       hash = (53 * hash) + getNumSongs();
       hash = (37 * hash) + NUM_ALBUMS_FIELD_NUMBER;
       hash = (53 * hash) + getNumAlbums();
+      hash = (37 * hash) + ORIGIN_FIELD_NUMBER;
+      hash = (53 * hash) + origin_;
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -2468,6 +2634,7 @@ public final class PlaylistOuterClass {
         numArtists_ = 0;
         numSongs_ = 0;
         numAlbums_ = 0;
+        origin_ = 0;
         return this;
       }
 
@@ -2529,6 +2696,9 @@ public final class PlaylistOuterClass {
         if (((from_bitField0_ & 0x00000020) != 0)) {
           result.numAlbums_ = numAlbums_;
         }
+        if (((from_bitField0_ & 0x00000040) != 0)) {
+          result.origin_ = origin_;
+        }
       }
 
       @java.lang.Override
@@ -2585,6 +2755,9 @@ public final class PlaylistOuterClass {
         }
         if (other.getNumAlbums() != 0) {
           setNumAlbums(other.getNumAlbums());
+        }
+        if (other.origin_ != 0) {
+          setOriginValue(other.getOriginValue());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -2650,6 +2823,11 @@ public final class PlaylistOuterClass {
                 bitField0_ |= 0x00000020;
                 break;
               } // case 48
+              case 56: {
+                origin_ = input.readEnum();
+                bitField0_ |= 0x00000040;
+                break;
+              } // case 56
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -3103,6 +3281,59 @@ public final class PlaylistOuterClass {
       public Builder clearNumAlbums() {
         bitField0_ = (bitField0_ & ~0x00000020);
         numAlbums_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int origin_ = 0;
+      /**
+       * <code>.Playlist.Origin origin = 7;</code>
+       * @return The enum numeric value on the wire for origin.
+       */
+      @java.lang.Override public int getOriginValue() {
+        return origin_;
+      }
+      /**
+       * <code>.Playlist.Origin origin = 7;</code>
+       * @param value The enum numeric value on the wire for origin to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOriginValue(int value) {
+        origin_ = value;
+        bitField0_ |= 0x00000040;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.Playlist.Origin origin = 7;</code>
+       * @return The origin.
+       */
+      @java.lang.Override
+      public PlaylistOuterClass.Playlist.Origin getOrigin() {
+        PlaylistOuterClass.Playlist.Origin result = PlaylistOuterClass.Playlist.Origin.forNumber(origin_);
+        return result == null ? PlaylistOuterClass.Playlist.Origin.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.Playlist.Origin origin = 7;</code>
+       * @param value The origin to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOrigin(PlaylistOuterClass.Playlist.Origin value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000040;
+        origin_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.Playlist.Origin origin = 7;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOrigin() {
+        bitField0_ = (bitField0_ & ~0x00000040);
+        origin_ = 0;
         onChanged();
         return this;
       }
@@ -4425,13 +4656,15 @@ public final class PlaylistOuterClass {
       "\007.ArtistH\000\210\001\001\022\023\n\013duration_ms\030\004 \001(\tB\t\n\007_a" +
       "rtist\"U\n\006Artist\022\023\n\013artist_name\030\001 \001(\t\022\022\n\n" +
       "artist_uri\030\002 \001(\t\022\016\n\006genres\030\003 \003(\t\022\022\n\npopu" +
-      "larity\030\004 \001(\005\"\206\001\n\010Playlist\022\024\n\005songs\030\001 \003(\013" +
+      "larity\030\004 \001(\005\"\332\001\n\010Playlist\022\024\n\005songs\030\001 \003(\013" +
       "2\005.Song\022\025\n\rplaylist_name\030\002 \001(\t\022\021\n\tfollow" +
       "ers\030\003 \001(\005\022\023\n\013num_artists\030\004 \001(\005\022\021\n\tnum_so" +
-      "ngs\030\005 \001(\005\022\022\n\nnum_albums\030\006 \001(\005\"#\n\rArtistR" +
-      "equest\022\022\n\nartist_uri\030\001 \001(\t\"=\n\016ArtistResp" +
-      "onse\022\022\n\nartist_uri\030\001 \001(\t\022\027\n\006artist\030\002 \001(\013" +
-      "2\007.Artistb\006proto3"
+      "ngs\030\005 \001(\005\022\022\n\nnum_albums\030\006 \001(\005\022 \n\006origin\030" +
+      "\007 \001(\0162\020.Playlist.Origin\"0\n\006Origin\022\010\n\004USE" +
+      "R\020\000\022\013\n\007DATASET\020\001\022\017\n\013SPOTIFY_TOP\020\002\"#\n\rArt" +
+      "istRequest\022\022\n\nartist_uri\030\001 \001(\t\"=\n\016Artist" +
+      "Response\022\022\n\nartist_uri\030\001 \001(\t\022\027\n\006artist\030\002" +
+      " \001(\0132\007.Artistb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -4454,7 +4687,7 @@ public final class PlaylistOuterClass {
     internal_static_Playlist_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Playlist_descriptor,
-        new java.lang.String[] { "Songs", "PlaylistName", "Followers", "NumArtists", "NumSongs", "NumAlbums", });
+        new java.lang.String[] { "Songs", "PlaylistName", "Followers", "NumArtists", "NumSongs", "NumAlbums", "Origin", });
     internal_static_ArtistRequest_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_ArtistRequest_fieldAccessorTable = new
