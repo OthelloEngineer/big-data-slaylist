@@ -7,7 +7,7 @@ import time
 import kafka
 import aiohttp
 from fastapi import FastAPI
-
+import playlist_pb2
 import cool_errs
 import data
 import spotify_kafka
@@ -48,8 +48,8 @@ async def fetch_artist(artist_req: data.ArtistRequest, session: aiohttp.ClientSe
 
 def get_artist_id() -> data.ArtistRequest:
     # kafka consumer goes here
-    msg = my_client.get_one_message()
-    id = msg.value.decode()
+    msg_bytes = my_client.get_one_message()
+    id = playlist_pb2.ArtistRequest.FromString(msg_bytes).artist_uri
     logger.info(f"Received message: {id}")
     return data.ArtistRequest(id=id)
 
@@ -57,7 +57,9 @@ def get_artist_id() -> data.ArtistRequest:
 def produce_artist(artist: data.Artist):
     # kafka producer goes here
     logger.info(artist)
-    my_client.produce(str(artist))
+    # transform to protobuf
+    pb_artist =  playlist_pb2.Artist(artist_uri=artist.uri, artist_name=artist.name, genres=artist.genres, popularity=artist.popularity)
+    my_client.produce(pb_artist.SerializeToString())
 
 
 @asynccontextmanager
