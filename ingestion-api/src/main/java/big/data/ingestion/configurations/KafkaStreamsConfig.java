@@ -1,5 +1,6 @@
 package big.data.ingestion.configurations;
 
+import big.data.ingestion.controllers.IngestionController;
 import big.data.ingestion.data.Playlist;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,14 +54,7 @@ public class KafkaStreamsConfig {
                 Playlist playlist = objectMapper.readValue(value, Playlist.class);
 
                 // Use a Set to deduplicate artist URIs
-                Set<String> uniqueArtistUris = new HashSet<>();
-                playlist.getTracks().forEach(track -> uniqueArtistUris.add(track.getArtistUri()));
-
-                // Publish each unique artist URI to ARTISTID
-                uniqueArtistUris.forEach(artistUri -> {
-                    kafkaTemplate.send("ARTISTID", artistUri);
-                    System.out.println("Published artist URI: " + artistUri);
-                });
+                IngestionController.artistUriExtraction(playlist, kafkaTemplate);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Failed to process playlist for artist URIs", e);
             }

@@ -39,32 +39,19 @@ public class IngestionController {
         List<Playlist> playlists = fileWrapper.getPlaylists();
 
         // Process each playlist
-        playlists.forEach(playlist -> {
-            try {
-                // Filter playlists with fewer than 10 followers
-                if (playlist.getNumFollowers() >= 10) {
-                    // Serialize and send playlist to INGESTION topic
-                    String playlistJson = objectMapper.writeValueAsString(playlist);
-                    kafkaTemplate.send("INGESTION", playlistJson);
-
-                    // Extract unique artist URIs and send to ARTISTID topic
-                    Set<String> uniqueArtistUris = new HashSet<>();
-                    playlist.getTracks().forEach(track -> uniqueArtistUris.add(track.getArtistUri()));
-                    uniqueArtistUris.forEach(artistUri -> {
-                        kafkaTemplate.send("ARTISTID", artistUri);
-                        System.out.println("Published artist URI: " + artistUri);
-                    });
-                }
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to serialize playlist", e);
-            }
-        });
+        playlists.forEach(this::dumper);
 
         return ResponseEntity.ok("Playlists and artist URIs processed and published to Kafka topics.");
     }
 
     @PostMapping("/user-playlist")
     public ResponseEntity<String> processUserPlaylist(@RequestBody Playlist playlist) {
+        dumper(playlist);
+
+        return ResponseEntity.ok("User playlist processed and published to Kafka topics.");
+    }
+
+    private void dumper(Playlist playlist) {
         try {
             // Filter playlists with fewer than 10 followers
             if (playlist.getNumFollowers() >= 10) {
@@ -73,17 +60,19 @@ public class IngestionController {
                 kafkaTemplate.send("INGESTION", playlistJson);
 
                 // Extract unique artist URIs and send to ARTISTID topic
-                Set<String> uniqueArtistUris = new HashSet<>();
-                playlist.getTracks().forEach(track -> uniqueArtistUris.add(track.getArtistUri()));
-                uniqueArtistUris.forEach(artistUri -> {
-                    kafkaTemplate.send("ARTISTID", artistUri);
-                    System.out.println("Published artist URI: " + artistUri);
-                });
+                artistUriExtraction(playlist, kafkaTemplate);
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize playlist", e);
         }
+    }
 
-        return ResponseEntity.ok("User playlist processed and published to Kafka topics.");
+    public static void artistUriExtraction(Playlist playlist, KafkaTemplate<String, String> kafkaTemplate) {
+        Set<String> uniqueArtistUris = new HashSet<>();
+        playlist.getTracks().forEach(track -> uniqueArtistUris.add(track.getArtistUri()));
+        uniqueArtistUris.forEach(artistUri -> {
+            kafkaTemplate.send("ARTISTID", artistUri);
+            System.out.println("Published artist URI: " + artistUri);
+        });
     }
 }
