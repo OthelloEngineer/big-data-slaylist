@@ -24,8 +24,8 @@ services:
     depends_on:
       - zookeeper
 
-  ingestion-api:
-    image: ingestion-api
-    container_name: ingestion-api
-    depends_on:
-      - kafka
+#  ingestion-api:
+#    image: ingestion-api
+#    container_name: ingestion-api
+#    depends_on:
+#      - kafka

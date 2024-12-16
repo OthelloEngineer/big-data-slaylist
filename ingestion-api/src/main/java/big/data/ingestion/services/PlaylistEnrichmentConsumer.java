@@ -13,41 +13,32 @@ import org.springframework.stereotype.Service;
 public class PlaylistEnrichmentConsumer {
 
     private final PlaylistManager playlistManager;
-    private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final KafkaTemplate<String, PlaylistOuterClass.Playlist> kafkaTemplate;
 
-    public PlaylistEnrichmentConsumer(PlaylistManager playlistManager, KafkaTemplate<String, String> kafkaTemplate) {
+    public PlaylistEnrichmentConsumer(PlaylistManager playlistManager, KafkaTemplate<String, PlaylistOuterClass.Playlist> kafkaTemplate) {
         this.playlistManager = playlistManager;
         this.kafkaTemplate = kafkaTemplate;
     }
 
     @KafkaListener(topics = "ARTIST", groupId = "playlist-enrichment")
-    public void enrichArtistData(ConsumerRecord<String, String> record) {
-        try {
-            // Deserialize the ArtistResponse message
-            PlaylistOuterClass.ArtistResponse artistResponse =
-                    PlaylistOuterClass.ArtistResponse.parseFrom(record.value().getBytes());
+    public void consumeArtistData(ConsumerRecord<String, PlaylistOuterClass.Artist> record) {
+        // Deserialize artist data
+        PlaylistOuterClass.Artist artist = record.value();
+        String artistUri = artist.getArtistUri();
 
-            String artistUri = artistResponse.getArtistUri();
-            PlaylistOuterClass.Artist artist = artistResponse.getArtist();
+        // Update in-memory playlists with the received artist data
+        playlistManager.updateSongWithArtist(artistUri, artist);
 
-            // Iterate through all stored playlists and update matching tracks
-            playlistManager.getAllPlaylists().forEach((playlistId, playlistBuilder) -> {
-                playlistManager.updateSongWithArtist(playlistId, artistUri, artist);
+        // Check all playlists to see if they are complete and finalize them
+        playlistManager.getAllPlaylists().forEach((playlistId, playlistBuilder) -> {
+            if (playlistManager.isPlaylistComplete(playlistBuilder)) {
+                // Finalize and remove the playlist
+                PlaylistOuterClass.Playlist finalizedPlaylist = playlistManager.finalizePlaylist(playlistId);
 
-                // Send enriched playlist to PLAYLISTS topic (optional: finalize immediately)
-                PlaylistOuterClass.Playlist enrichedPlaylist = playlistManager.finalizePlaylist(playlistId);
-                try {
-                    String playlistJson = objectMapper.writeValueAsString(enrichedPlaylist);
-                    kafkaTemplate.send("PLAYLISTS", playlistJson);
-                    System.out.println("Enriched playlist sent to PLAYLISTS: " + playlistId);
-                } catch (Exception e) {
-                    System.err.println("Failed to serialize playlist: " + e.getMessage());
-                }
-            });
-
-        } catch (Exception e) {
-            System.err.println("Failed to process artist data: " + e.getMessage());
-        }
+                // Publish the finalized playlist to the PLAYLISTS topic
+                kafkaTemplate.send("PLAYLISTS", playlistId, finalizedPlaylist);
+                System.out.println("Finalized and published playlist: " + playlistId);
+            }
+        });
     }
 }
