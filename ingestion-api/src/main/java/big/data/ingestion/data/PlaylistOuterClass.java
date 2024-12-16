@@ -2056,6 +2056,12 @@ public final class PlaylistOuterClass {
      * @return The origin.
      */
     PlaylistOuterClass.Playlist.Origin getOrigin();
+
+    /**
+     * <code>int32 pid = 8;</code>
+     * @return The pid.
+     */
+    int getPid();
   }
   /**
    * Protobuf type {@code Playlist}
@@ -2365,6 +2371,17 @@ public final class PlaylistOuterClass {
       return result == null ? PlaylistOuterClass.Playlist.Origin.UNRECOGNIZED : result;
     }
 
+    public static final int PID_FIELD_NUMBER = 8;
+    private int pid_ = 0;
+    /**
+     * <code>int32 pid = 8;</code>
+     * @return The pid.
+     */
+    @java.lang.Override
+    public int getPid() {
+      return pid_;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -2399,6 +2416,9 @@ public final class PlaylistOuterClass {
       }
       if (origin_ != PlaylistOuterClass.Playlist.Origin.USER.getNumber()) {
         output.writeEnum(7, origin_);
+      }
+      if (pid_ != 0) {
+        output.writeInt32(8, pid_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -2436,6 +2456,10 @@ public final class PlaylistOuterClass {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(7, origin_);
       }
+      if (pid_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(8, pid_);
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
       return size;
@@ -2464,6 +2488,8 @@ public final class PlaylistOuterClass {
       if (getNumAlbums()
           != other.getNumAlbums()) return false;
       if (origin_ != other.origin_) return false;
+      if (getPid()
+          != other.getPid()) return false;
       if (!getUnknownFields().equals(other.getUnknownFields())) return false;
       return true;
     }
@@ -2491,6 +2517,8 @@ public final class PlaylistOuterClass {
       hash = (53 * hash) + getNumAlbums();
       hash = (37 * hash) + ORIGIN_FIELD_NUMBER;
       hash = (53 * hash) + origin_;
+      hash = (37 * hash) + PID_FIELD_NUMBER;
+      hash = (53 * hash) + getPid();
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -2635,6 +2663,7 @@ public final class PlaylistOuterClass {
         numSongs_ = 0;
         numAlbums_ = 0;
         origin_ = 0;
+        pid_ = 0;
         return this;
       }
 
@@ -2699,6 +2728,9 @@ public final class PlaylistOuterClass {
         if (((from_bitField0_ & 0x00000040) != 0)) {
           result.origin_ = origin_;
         }
+        if (((from_bitField0_ & 0x00000080) != 0)) {
+          result.pid_ = pid_;
+        }
       }
 
       @java.lang.Override
@@ -2758,6 +2790,9 @@ public final class PlaylistOuterClass {
         }
         if (other.origin_ != 0) {
           setOriginValue(other.getOriginValue());
+        }
+        if (other.getPid() != 0) {
+          setPid(other.getPid());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         onChanged();
@@ -2828,6 +2863,11 @@ public final class PlaylistOuterClass {
                 bitField0_ |= 0x00000040;
                 break;
               } // case 56
+              case 64: {
+                pid_ = input.readInt32();
+                bitField0_ |= 0x00000080;
+                break;
+              } // case 64
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -3334,6 +3374,38 @@ public final class PlaylistOuterClass {
       public Builder clearOrigin() {
         bitField0_ = (bitField0_ & ~0x00000040);
         origin_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private int pid_ ;
+      /**
+       * <code>int32 pid = 8;</code>
+       * @return The pid.
+       */
+      @java.lang.Override
+      public int getPid() {
+        return pid_;
+      }
+      /**
+       * <code>int32 pid = 8;</code>
+       * @param value The pid to set.
+       * @return This builder for chaining.
+       */
+      public Builder setPid(int value) {
+
+        pid_ = value;
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>int32 pid = 8;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearPid() {
+        bitField0_ = (bitField0_ & ~0x00000080);
+        pid_ = 0;
         onChanged();
         return this;
       }
@@ -4656,15 +4728,15 @@ public final class PlaylistOuterClass {
       "\007.ArtistH\000\210\001\001\022\023\n\013duration_ms\030\004 \001(\tB\t\n\007_a" +
       "rtist\"U\n\006Artist\022\023\n\013artist_name\030\001 \001(\t\022\022\n\n" +
       "artist_uri\030\002 \001(\t\022\016\n\006genres\030\003 \003(\t\022\022\n\npopu" +
-      "larity\030\004 \001(\005\"\332\001\n\010Playlist\022\024\n\005songs\030\001 \003(\013" +
+      "larity\030\004 \001(\005\"\347\001\n\010Playlist\022\024\n\005songs\030\001 \003(\013" +
       "2\005.Song\022\025\n\rplaylist_name\030\002 \001(\t\022\021\n\tfollow" +
       "ers\030\003 \001(\005\022\023\n\013num_artists\030\004 \001(\005\022\021\n\tnum_so" +
       "ngs\030\005 \001(\005\022\022\n\nnum_albums\030\006 \001(\005\022 \n\006origin\030" +
-      "\007 \001(\0162\020.Playlist.Origin\"0\n\006Origin\022\010\n\004USE" +
-      "R\020\000\022\013\n\007DATASET\020\001\022\017\n\013SPOTIFY_TOP\020\002\"#\n\rArt" +
-      "istRequest\022\022\n\nartist_uri\030\001 \001(\t\"=\n\016Artist" +
-      "Response\022\022\n\nartist_uri\030\001 \001(\t\022\027\n\006artist\030\002" +
-      " \001(\0132\007.Artistb\006proto3"
+      "\007 \001(\0162\020.Playlist.Origin\022\013\n\003pid\030\010 \001(\005\"0\n\006" +
+      "Origin\022\010\n\004USER\020\000\022\013\n\007DATASET\020\001\022\017\n\013SPOTIFY" +
+      "_TOP\020\002\"#\n\rArtistRequest\022\022\n\nartist_uri\030\001 " +
+      "\001(\t\"=\n\016ArtistResponse\022\022\n\nartist_uri\030\001 \001(" +
+      "\t\022\027\n\006artist\030\002 \001(\0132\007.Artistb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -4687,7 +4759,7 @@ public final class PlaylistOuterClass {
     internal_static_Playlist_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_Playlist_descriptor,
-        new java.lang.String[] { "Songs", "PlaylistName", "Followers", "NumArtists", "NumSongs", "NumAlbums", "Origin", });
+        new java.lang.String[] { "Songs", "PlaylistName", "Followers", "NumArtists", "NumSongs", "NumAlbums", "Origin", "Pid", });
     internal_static_ArtistRequest_descriptor =
       getDescriptor().getMessageTypes().get(3);
     internal_static_ArtistRequest_fieldAccessorTable = new

@@ -31,7 +31,7 @@ class Artist(_message.Message):
     def __init__(self, artist_name: _Optional[str] = ..., artist_uri: _Optional[str] = ..., genres: _Optional[_Iterable[str]] = ..., popularity: _Optional[int] = ...) -> None: ...
 
 class Playlist(_message.Message):
-    __slots__ = ("songs", "playlist_name", "followers", "num_artists", "num_songs", "num_albums", "origin")
+    __slots__ = ("songs", "playlist_name", "followers", "num_artists", "num_songs", "num_albums", "origin", "pid")
     class Origin(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
         __slots__ = ()
         USER: _ClassVar[Playlist.Origin]
@@ -47,6 +47,7 @@ class Playlist(_message.Message):
     NUM_SONGS_FIELD_NUMBER: _ClassVar[int]
     NUM_ALBUMS_FIELD_NUMBER: _ClassVar[int]
     ORIGIN_FIELD_NUMBER: _ClassVar[int]
+    PID_FIELD_NUMBER: _ClassVar[int]
     songs: _containers.RepeatedCompositeFieldContainer[Song]
     playlist_name: str
     followers: int
@@ -54,7 +55,8 @@ class Playlist(_message.Message):
     num_songs: int
     num_albums: int
     origin: Playlist.Origin
-    def __init__(self, songs: _Optional[_Iterable[_Union[Song, _Mapping]]] = ..., playlist_name: _Optional[str] = ..., followers: _Optional[int] = ..., num_artists: _Optional[int] = ..., num_songs: _Optional[int] = ..., num_albums: _Optional[int] = ..., origin: _Optional[_Union[Playlist.Origin, str]] = ...) -> None: ...
+    pid: int
+    def __init__(self, songs: _Optional[_Iterable[_Union[Song, _Mapping]]] = ..., playlist_name: _Optional[str] = ..., followers: _Optional[int] = ..., num_artists: _Optional[int] = ..., num_songs: _Optional[int] = ..., num_albums: _Optional[int] = ..., origin: _Optional[_Union[Playlist.Origin, str]] = ..., pid: _Optional[int] = ...) -> None: ...
 
 class ArtistRequest(_message.Message):
     __slots__ = ("artist_uri",)
