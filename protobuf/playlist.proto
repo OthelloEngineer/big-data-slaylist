@@ -28,6 +28,7 @@ message Playlist {
         SPOTIFY_TOP = 2;
     }
     Origin origin = 7;
+    int32 pid = 8;
 }
 
 
