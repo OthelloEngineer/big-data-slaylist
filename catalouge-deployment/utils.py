@@ -14,9 +14,14 @@ from pyspark.sql import SparkSession
 locale.getdefaultlocale()
 locale.getpreferredencoding()
 
-FS: str = "hdfs://namenode:9000/topics/INGESTION/partition=0"
+FS: str = "hdfs://namenode:9000/topics/INGESTION/"
 # Get the IP address of the host machine.
-SPARK_DRIVER_HOST = "192.168.1.39"
+SPARK_DRIVER_HOST = (
+    subprocess.check_output(["hostname", "-i"]).decode(encoding="utf-8").strip()
+)
+
+SPARK_DRIVER_HOST = re.sub(rf"\s*127.0.0.1\s*", "", SPARK_DRIVER_HOST)
+os.environ["SPARK_LOCAL_IP"] = SPARK_DRIVER_HOST
 
 
 class SPARK_ENV(Enum):
