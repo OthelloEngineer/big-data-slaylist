@@ -11,12 +11,21 @@ public class PlaylistManager {
 
     private final Map<String, PlaylistOuterClass.Playlist.Builder> inMemoryPlaylists = new ConcurrentHashMap<>();
 
+    // Generate a deterministic ID for a playlist (hash of key fields)
+    public String generatePlaylistId(PlaylistOuterClass.Playlist playlist) {
+        return Integer.toHexString((playlist.getPlaylistName() + playlist.getFollowers()).hashCode());
+    }
+
     public void storePlaylist(String playlistId, PlaylistOuterClass.Playlist playlist) {
         inMemoryPlaylists.put(playlistId, playlist.toBuilder());
     }
 
     public PlaylistOuterClass.Playlist.Builder getPlaylist(String playlistId) {
         return inMemoryPlaylists.get(playlistId);
+    }
+
+    public Map<String, PlaylistOuterClass.Playlist.Builder> getAllPlaylists() {
+        return inMemoryPlaylists;
     }
 
     public void updateSongWithArtist(String playlistId, String artistUri, PlaylistOuterClass.Artist artist) {
@@ -32,9 +41,5 @@ public class PlaylistManager {
 
     public PlaylistOuterClass.Playlist finalizePlaylist(String playlistId) {
         return inMemoryPlaylists.remove(playlistId).build();
-    }
-
-    public Map<String, PlaylistOuterClass.Playlist.Builder> getInMemoryPlaylists() {
-        return inMemoryPlaylists;
     }
 }

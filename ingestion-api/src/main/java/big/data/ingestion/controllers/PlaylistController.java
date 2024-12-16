@@ -23,14 +23,15 @@ public class PlaylistController {
 
     @PostMapping("/playlist")
     public ResponseEntity<String> ingestPlaylist(@RequestBody PlaylistOuterClass.Playlist playlist) {
-        String playlistId = "playlist-" + playlist.hashCode();
+        // Generate a unique ID for the playlist
+        String playlistId = playlistManager.generatePlaylistId(playlist);
 
-        // Extract artist URIs and send to ARTISTID
+        // Extract artist URIs and send to ARTISTID topic
         artistProducer.extractAndSendUniqueArtistUris(playlist.getSongsList(), "ARTISTID");
 
         // Store the playlist in memory
         playlistManager.storePlaylist(playlistId, playlist);
 
-        return ResponseEntity.ok("Playlist uploaded and artist URIs sent for processing.");
+        return ResponseEntity.ok("Playlist uploaded and artist URIs sent for processing. ID: " + playlistId);
     }
 }
