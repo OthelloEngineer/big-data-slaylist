@@ -7,7 +7,8 @@ proto_file_path = os.path.join(current_dir, proto_file)
 
 output_dir = os.path.abspath(os.path.join(current_dir, "../spotify-api"))
 java_dir_rel = "ingestion-api\src\main\java\\big\data\ingestion\data"
-java_dir = os.path.abspath(os.path.join(current_dir, f"../{java_dir_rel}")) 
+java_dir = os.path.abspath(os.path.join(current_dir, f"../{java_dir_rel}"))
+
 protoc_command_python = [
     "protoc", 
     f"--proto_path={current_dir}",  

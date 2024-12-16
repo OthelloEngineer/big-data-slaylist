@@ -27,7 +27,6 @@ message Playlist {
         DATASET = 1;
         SPOTIFY_TOP = 2;
     }
-
     Origin origin = 7;
 }
 
