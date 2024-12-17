@@ -7,11 +7,16 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Service
 public class PlaylistEnrichmentConsumer {
 
     private final PlaylistManager playlistManager;
-    private final KafkaTemplate<String, String> kafkaTemplate; // Use String for value
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final Set<String> processedArtistUris = ConcurrentHashMap.newKeySet(); // Track processed artist URIs
+    private final Set<String> pendingArtistUris = ConcurrentHashMap.newKeySet();   // Track pending artist URIs
 
     public PlaylistEnrichmentConsumer(PlaylistManager playlistManager, KafkaTemplate<String, String> kafkaTemplate) {
         this.playlistManager = playlistManager;
@@ -20,33 +25,32 @@ public class PlaylistEnrichmentConsumer {
 
     @KafkaListener(topics = "ARTIST", groupId = "playlist-enrichment")
     public void consumeArtistData(PlaylistOuterClass.Artist artist) {
-        processArtistData(artist);
+        System.out.println("Processing artist: " + artist.getArtistUri());
+        processedArtistUris.add(artist.getArtistUri());
+        pendingArtistUris.remove(artist.getArtistUri()); // Mark this artist as processed
+        playlistManager.updateSongWithArtist(artist.getArtistUri(), artist);
     }
 
-    public void consumePendingPlaylists() {
-        System.out.println("Starting playlist enrichment...");
+    public boolean isAllArtistsProcessed(Set<String> artistIds) {
+        return processedArtistUris.containsAll(artistIds);
+    }
+
+    public boolean addPendingArtistUri(String artistUri) {
+        return pendingArtistUris.add(artistUri); // Prevent duplicates
+    }
+
+    public void finalizePlaylistsIfComplete() {
         playlistManager.getAllPlaylists().forEach((playlistId, playlistBuilder) -> {
             if (playlistManager.isPlaylistComplete(playlistBuilder)) {
-                PlaylistOuterClass.Playlist finalizedPlaylist = playlistManager.finalizePlaylist(playlistId);
-
                 try {
-                    // Convert Protobuf to JSON String
+                    PlaylistOuterClass.Playlist finalizedPlaylist = playlistManager.finalizePlaylist(playlistId);
                     String jsonPlaylist = JsonFormat.printer().print(finalizedPlaylist);
-
-                    // Send as String to Kafka
                     kafkaTemplate.send("PLAYLISTS", String.valueOf(playlistId), jsonPlaylist);
                     System.out.println("Finalized and published playlist: " + playlistId);
                 } catch (Exception e) {
-                    System.err.println("Failed to serialize playlist to JSON: " + e.getMessage());
+                    System.err.println("Error finalizing playlist: " + e.getMessage());
                 }
             }
         });
-        System.out.println("Playlist enrichment completed.");
-    }
-
-    private void processArtistData(PlaylistOuterClass.Artist artist) {
-        String artistUri = artist.getArtistUri();
-        playlistManager.updateSongWithArtist(artistUri, artist);
-        consumePendingPlaylists();
     }
 }
