@@ -4,6 +4,7 @@ import big.data.ingestion.components.PlaylistManager;
 import big.data.ingestion.data.PlaylistOuterClass;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.util.JsonFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/ingest")
@@ -19,11 +21,13 @@ public class PlaylistIngestionController {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final PlaylistManager playlistManager;
     private final ObjectMapper objectMapper;
+    private final Set<String> publishedArtistUris; // Prevent duplicated artist URIs
 
     public PlaylistIngestionController(KafkaTemplate<String, String> kafkaTemplate, PlaylistManager playlistManager) {
         this.kafkaTemplate = kafkaTemplate;
         this.playlistManager = playlistManager;
         this.objectMapper = new ObjectMapper();
+        this.publishedArtistUris = new HashSet<>();
     }
 
     @PostMapping("/dataset")
@@ -35,43 +39,76 @@ public class PlaylistIngestionController {
             return ResponseEntity.badRequest().body("Invalid input format: 'playlists' array not found.");
         }
 
-        // Process each playlist
-        for (JsonNode playlistNode : playlistsNode) {
-            int followers = playlistNode.path("num_followers").asInt();
+        // Process each playlist asynchronously
+        CompletableFuture<Void> processingTask = CompletableFuture.runAsync(() -> {
+            for (JsonNode playlistNode : playlistsNode) {
+                int followers = playlistNode.path("num_followers").asInt();
 
-            // Skip playlists with fewer than 10 followers
-            if (followers < 10) {
-                System.out.println("Skipped playlist due to low followers: " + playlistNode.path("name").asText());
-                continue;
-            }
-
-            // Build Playlist proto message
-            PlaylistOuterClass.Playlist playlist = buildPlaylistProto(playlistNode);
-
-            // Generate unique ID and store playlist
-            String playlistId = Integer.toHexString((playlist.getPlaylistName() + playlist.getFollowers()).hashCode());
-            playlistManager.storePlaylist(playlistId, playlist);
-
-            // Extract unique artist URIs and send to ARTISTID topic
-            Set<String> artistUris = new HashSet<>();
-            playlist.getSongsList().forEach(song -> {
-                if (song.hasArtist() && !song.getArtist().getArtistUri().isEmpty()) {
-                    artistUris.add(song.getArtist().getArtistUri());
+                // Skip playlists with fewer than 10 followers
+                if (followers < 10) {
+                    System.out.println("Skipped playlist due to low followers: " + playlistNode.path("name").asText());
+                    continue;
                 }
-            });
 
-            artistUris.forEach(artistUri -> {
-                kafkaTemplate.send("ARTISTID", artistUri);
-                System.out.println("Published artist URI: " + artistUri);
-            });
+                processPlaylist(playlistNode, PlaylistOuterClass.Playlist.Origin.DATASET);
+            }
+        });
 
-            System.out.println("Stored playlist: " + playlist.getPlaylistName());
-        }
-
+        processingTask.join(); // Wait for processing to complete
         return ResponseEntity.ok("Dataset ingestion completed.");
     }
 
-    private PlaylistOuterClass.Playlist buildPlaylistProto(JsonNode playlistNode) {
+    @PostMapping("/user-playlist")
+    public ResponseEntity<String> ingestUserPlaylist(@RequestBody String jsonPayload) throws IOException {
+        JsonNode playlistNode = objectMapper.readTree(jsonPayload);
+
+        if (playlistNode.isMissingNode()) {
+            return ResponseEntity.badRequest().body("Invalid input format: playlist data not found.");
+        }
+
+        processPlaylist(playlistNode, PlaylistOuterClass.Playlist.Origin.USER);
+        return ResponseEntity.ok("User playlist ingestion completed.");
+    }
+
+    private void processPlaylist(JsonNode playlistNode, PlaylistOuterClass.Playlist.Origin origin) {
+        try {
+            // Build Playlist proto message
+            PlaylistOuterClass.Playlist playlist = buildPlaylistProto(playlistNode, origin);
+
+            // Serialize Protobuf to JSON String
+            String playlistJson = JsonFormat.printer().print(playlist);
+
+            // Store playlist
+            playlistManager.storePlaylist(playlist.getPid(), playlist);
+
+            // Extract and deduplicate artist URIs
+            Set<String> artistUris = new HashSet<>();
+            playlist.getSongsList().forEach(song -> {
+                if (song.hasArtist() && !song.getArtist().getArtistUri().isEmpty()) {
+                    String artistUri = song.getArtist().getArtistUri();
+                    if (!publishedArtistUris.contains(artistUri)) {
+                        artistUris.add(artistUri);
+                        publishedArtistUris.add(artistUri);
+                    }
+                }
+            });
+
+            // Publish unique artist URIs and Playlist JSON
+            artistUris.forEach(artistUri -> {
+                kafkaTemplate.send("ARTISTID", artistUri);
+                System.out.println("Published artist URI to ARTISTID topic: " + artistUri);
+            });
+
+            kafkaTemplate.send("PLAYLISTS", String.valueOf(playlist.getPid()), playlistJson);
+            System.out.println("Published playlist to PLAYLISTS topic: " + playlist.getPlaylistName());
+
+        } catch (Exception e) {
+            System.err.println("Error processing playlist: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private PlaylistOuterClass.Playlist buildPlaylistProto(JsonNode playlistNode, PlaylistOuterClass.Playlist.Origin origin) {
         PlaylistOuterClass.Playlist.Builder playlistBuilder = PlaylistOuterClass.Playlist.newBuilder();
 
         // Set Playlist metadata
@@ -81,7 +118,7 @@ public class PlaylistIngestionController {
         playlistBuilder.setNumSongs(playlistNode.path("num_tracks").asInt());
         playlistBuilder.setNumAlbums(playlistNode.path("num_albums").asInt());
         playlistBuilder.setPid(playlistNode.path("pid").asInt());
-        playlistBuilder.setOrigin(PlaylistOuterClass.Playlist.Origin.DATASET); // Explicitly set origin to DATASET
+        playlistBuilder.setOrigin(origin);
 
         // Process tracks
         JsonNode tracksNode = playlistNode.path("tracks");

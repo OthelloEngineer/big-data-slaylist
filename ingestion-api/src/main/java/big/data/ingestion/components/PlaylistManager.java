@@ -9,14 +9,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class PlaylistManager {
-    private final Map<String, PlaylistOuterClass.Playlist.Builder> inMemoryPlaylists = new ConcurrentHashMap<>();
+    private final Map<Integer, PlaylistOuterClass.Playlist.Builder> inMemoryPlaylists = new ConcurrentHashMap<>();
     private final KafkaTemplate<String, PlaylistOuterClass.Playlist> kafkaTemplate;
+
 
     public PlaylistManager(KafkaTemplate<String, PlaylistOuterClass.Playlist> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void storePlaylist(String playlistId, PlaylistOuterClass.Playlist playlist) {
+    public void storePlaylist(int playlistId, PlaylistOuterClass.Playlist playlist) {
         inMemoryPlaylists.put(playlistId, playlist.toBuilder());
     }
 
@@ -35,12 +36,12 @@ public class PlaylistManager {
                 .allMatch(PlaylistOuterClass.Song::hasArtist);
     }
 
-    public PlaylistOuterClass.Playlist finalizePlaylist(String playlistId) {
+    public PlaylistOuterClass.Playlist finalizePlaylist(int playlistId) {
         PlaylistOuterClass.Playlist.Builder playlist = inMemoryPlaylists.remove(playlistId);
         return playlist != null ? playlist.build() : null;
     }
 
-    public Map<String, PlaylistOuterClass.Playlist.Builder> getAllPlaylists() {
+    public Map<Integer, PlaylistOuterClass.Playlist.Builder> getAllPlaylists() {
         return inMemoryPlaylists;
     }
 }

@@ -2,43 +2,51 @@ package big.data.ingestion.services;
 
 import big.data.ingestion.components.PlaylistManager;
 import big.data.ingestion.data.PlaylistOuterClass;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
+import com.google.protobuf.util.JsonFormat;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-
 
 @Service
 public class PlaylistEnrichmentConsumer {
 
     private final PlaylistManager playlistManager;
-    private final KafkaTemplate<String, PlaylistOuterClass.Playlist> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate; // Use String for value
 
-    public PlaylistEnrichmentConsumer(PlaylistManager playlistManager, KafkaTemplate<String, PlaylistOuterClass.Playlist> kafkaTemplate) {
+    public PlaylistEnrichmentConsumer(PlaylistManager playlistManager, KafkaTemplate<String, String> kafkaTemplate) {
         this.playlistManager = playlistManager;
         this.kafkaTemplate = kafkaTemplate;
     }
 
     @KafkaListener(topics = "ARTIST", groupId = "playlist-enrichment")
-    public void consumeArtistData(ConsumerRecord<String, PlaylistOuterClass.Artist> record) {
-        // Deserialize artist data
-        PlaylistOuterClass.Artist artist = record.value();
-        String artistUri = artist.getArtistUri();
+    public void consumeArtistData(PlaylistOuterClass.Artist artist) {
+        processArtistData(artist);
+    }
 
-        // Update in-memory playlists with the received artist data
-        playlistManager.updateSongWithArtist(artistUri, artist);
-
-        // Check all playlists to see if they are complete and finalize them
+    public void consumePendingPlaylists() {
+        System.out.println("Starting playlist enrichment...");
         playlistManager.getAllPlaylists().forEach((playlistId, playlistBuilder) -> {
             if (playlistManager.isPlaylistComplete(playlistBuilder)) {
-                // Finalize and remove the playlist
                 PlaylistOuterClass.Playlist finalizedPlaylist = playlistManager.finalizePlaylist(playlistId);
 
-                // Publish the finalized playlist to the PLAYLISTS topic
-                kafkaTemplate.send("PLAYLISTS", playlistId, finalizedPlaylist);
-                System.out.println("Finalized and published playlist: " + playlistId);
+                try {
+                    // Convert Protobuf to JSON String
+                    String jsonPlaylist = JsonFormat.printer().print(finalizedPlaylist);
+
+                    // Send as String to Kafka
+                    kafkaTemplate.send("PLAYLISTS", String.valueOf(playlistId), jsonPlaylist);
+                    System.out.println("Finalized and published playlist: " + playlistId);
+                } catch (Exception e) {
+                    System.err.println("Failed to serialize playlist to JSON: " + e.getMessage());
+                }
             }
         });
+        System.out.println("Playlist enrichment completed.");
+    }
+
+    private void processArtistData(PlaylistOuterClass.Artist artist) {
+        String artistUri = artist.getArtistUri();
+        playlistManager.updateSongWithArtist(artistUri, artist);
+        consumePendingPlaylists();
     }
 }
