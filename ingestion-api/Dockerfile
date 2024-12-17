@@ -10,5 +10,5 @@ COPY build/libs/ingestion-api-0.0.1-SNAPSHOT.jar app.jar
 # Expose the port your Spring Boot application listens on
 EXPOSE 8080
 
-# Set the command to run the application
+# Set the command to run the applicationjar tf build/libs/ingestion-api-0.0.1-SNAPSHOT.jar | grep actuator
 ENTRYPOINT ["java", "-jar", "app.jar"]
