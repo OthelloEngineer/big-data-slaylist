@@ -1,0 +1,24 @@
+
+{
+  "namespace": "big.data.ingestion.data",
+  "type": "record",
+  "name": "Playlist",
+  "fields": [
+    { "name": "songs", "type": { "type": "array", "items": "Song" } },
+    { "name": "playlist_name", "type": "string" },
+    { "name": "followers", "type": "int" },
+    { "name": "num_artists", "type": "int" },
+    { "name": "num_songs", "type": "int" },
+    { "name": "num_albums", "type": "int" },
+    { "name": "genres", "type": { "type": "map", "values": "int" } },
+    {
+      "name": "origin",
+      "type": {
+        "type": "enum",
+        "name": "Origin",
+        "symbols": ["USER", "DATASET", "SPOTIFY_TOP"]
+      }
+    },
+    { "name": "pid", "type": "int" }
+  ]
+}

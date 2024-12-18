@@ -1,0 +1,20 @@
+{
+  "namespace": "big.data.ingestion.data",
+  "type": "record",
+  "name": "Song",
+  "fields": [
+    { "name": "track_uri", "type": "string" },
+    { "name": "track_name", "type": "string" },
+    {
+      "name": "artist",
+      "type": ["null", { "type": "record", "name": "Artist", "fields": [
+        { "name": "artist_name", "type": "string" },
+        { "name": "artist_uri", "type": "string" },
+        { "name": "genres", "type": { "type": "array", "items": "string" } },
+        { "name": "popularity", "type": "int" }
+      ] }],
+      "default": null
+    },
+    { "name": "duration_ms", "type": "string" }
+  ]
+}
