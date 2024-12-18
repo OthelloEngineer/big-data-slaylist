@@ -10,7 +10,7 @@
     { "name": "num_artists", "type": "int" },
     { "name": "num_songs", "type": "int" },
     { "name": "num_albums", "type": "int" },
-    { "name": "genres", "type": "map", "values": "int" },
+    { "name": "genres", "type": { "type": "map", "values": "int" } },
     {
       "name": "origin",
       "type": {
