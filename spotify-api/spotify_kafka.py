@@ -7,11 +7,11 @@ class SpotifyKafka:
         self.producer = kafka.KafkaProducer(bootstrap_servers=bootstrap_servers)
         self.consumer = kafka.KafkaConsumer(id_topic, bootstrap_servers=bootstrap_servers, group_id="spotifyapi")
 
-    def produce(self, message: bytes):
-        self.producer.send(self.artist_topic, message)
+    def produce(self, message: bytes, key: str):
+        self.producer.send(topic=self.artist_topic, key=key, value=message)
 
     def get_one_message(self) -> bytes:
         msg = next(self.consumer)
         msg_bytes = msg.value
-        return msg_bytes
+        return  msg_bytes
         

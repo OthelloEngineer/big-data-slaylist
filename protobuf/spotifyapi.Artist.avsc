@@ -1,0 +1,11 @@
+{
+  "namespace": "spotifyapi",
+  "type": "record",
+  "name": "Artist",
+  "fields": [
+    { "name": "artist_name", "type": "string" },
+    { "name": "artist_uri", "type": "string" },
+    { "name": "genres", "type": { "type": "array", "items": "string" } },
+    { "name": "popularity", "type": "int" }
+  ]
+}

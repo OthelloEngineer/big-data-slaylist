@@ -1,0 +1,8 @@
+{
+  "namespace": "spotifyapi",
+  "type": "record",
+  "name": "ArtistRequest",
+  "fields": [
+    { "name": "artist_uri", "type": "string" }
+  ]
+}
