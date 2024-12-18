@@ -41,3 +41,6 @@ def generateAvro = tasks.register("generateAvro", GenerateAvroJavaTask) {
 tasks.named("compileJava").configure {
     dependsOn(generateAvro)
 }
+tasks.named("generateAvroJava").configure {
+    enabled = false // Disable the default Avro task
+}
