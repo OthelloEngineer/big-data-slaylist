@@ -1,8 +1,9 @@
 package big.data.ingestion.services;
 
 import big.data.ingestion.components.PlaylistManager;
-import big.data.ingestion.data.PlaylistOuterClass;
-import com.google.protobuf.util.JsonFormat;
+import big.data.ingestion.data.Artist;
+import big.data.ingestion.data.Playlist;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -15,8 +16,9 @@ public class PlaylistEnrichmentConsumer {
 
     private final PlaylistManager playlistManager;
     private final KafkaTemplate<String, String> kafkaTemplate;
-    private final Set<String> processedArtistUris = ConcurrentHashMap.newKeySet(); // Track processed artist URIs
-    private final Set<String> pendingArtistUris = ConcurrentHashMap.newKeySet();   // Track pending artist URIs
+    private final Set<String> processedArtistUris = ConcurrentHashMap.newKeySet();
+    private final Set<String> pendingArtistUris = ConcurrentHashMap.newKeySet();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public PlaylistEnrichmentConsumer(PlaylistManager playlistManager, KafkaTemplate<String, String> kafkaTemplate) {
         this.playlistManager = playlistManager;
@@ -24,29 +26,34 @@ public class PlaylistEnrichmentConsumer {
     }
 
     @KafkaListener(topics = "ARTIST", groupId = "playlist-enrichment")
-    public void consumeArtistData(PlaylistOuterClass.Artist artist) {
-        System.out.println("Processing artist: " + artist.getArtistUri());
-        processedArtistUris.add(artist.getArtistUri());
-        pendingArtistUris.remove(artist.getArtistUri()); // Mark this artist as processed
-        playlistManager.updateSongWithArtist(artist.getArtistUri(), artist);
+    public void consumeArtistData(Artist artist) {
+        String artistUri = artist.getArtistUri();
+        System.out.println("Processing artist: " + artistUri);
+
+        if (pendingArtistUris.remove(artistUri)) {
+            processedArtistUris.add(artistUri);
+            playlistManager.updateSongWithArtist(artistUri, artist);
+            finalizePendingPlaylists();
+        }
     }
 
-    public boolean isAllArtistsProcessed(Set<String> artistIds) {
-        return processedArtistUris.containsAll(artistIds);
+    public void addPendingArtistUri(String artistUri) {
+        pendingArtistUris.add(artistUri);
     }
 
-    public boolean addPendingArtistUri(String artistUri) {
-        return pendingArtistUris.add(artistUri); // Prevent duplicates
+    public boolean isAllArtistsProcessed(Set<String> artistUris) {
+        return processedArtistUris.containsAll(artistUris);
     }
 
-    public void finalizePlaylistsIfComplete() {
+    public void finalizePendingPlaylists() {
         playlistManager.getAllPlaylists().forEach((playlistId, playlistBuilder) -> {
             if (playlistManager.isPlaylistComplete(playlistBuilder)) {
                 try {
-                    PlaylistOuterClass.Playlist finalizedPlaylist = playlistManager.finalizePlaylist(playlistId);
-                    String jsonPlaylist = JsonFormat.printer().print(finalizedPlaylist);
+                    Playlist finalizedPlaylist = playlistBuilder.build();
+                    String jsonPlaylist = objectMapper.writeValueAsString(finalizedPlaylist);
                     kafkaTemplate.send("PLAYLISTS", String.valueOf(playlistId), jsonPlaylist);
                     System.out.println("Finalized and published playlist: " + playlistId);
+                    playlistManager.finalizePlaylist(playlistId);
                 } catch (Exception e) {
                     System.err.println("Error finalizing playlist: " + e.getMessage());
                 }

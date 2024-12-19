@@ -1,6 +1,7 @@
 package big.data.ingestion.components;
 
-import big.data.ingestion.data.PlaylistOuterClass;
+import big.data.ingestion.data.Playlist;
+import big.data.ingestion.data.Artist;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -8,32 +9,36 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class PlaylistManager {
-    private final Map<Integer, PlaylistOuterClass.Playlist.Builder> inMemoryPlaylists = new ConcurrentHashMap<>();
 
-    public void storePlaylist(int playlistId, PlaylistOuterClass.Playlist playlist) {
-        inMemoryPlaylists.put(playlistId, playlist.toBuilder());
+    private final Map<Integer, Playlist.Builder> inMemoryPlaylists = new ConcurrentHashMap<>();
+
+    public void storePlaylist(int playlistId, Playlist.Builder playlistBuilder) {
+        inMemoryPlaylists.put(playlistId, playlistBuilder);
     }
 
-    public void updateSongWithArtist(String artistUri, PlaylistOuterClass.Artist artist) {
-        inMemoryPlaylists.values().forEach(playlist -> {
-            playlist.getSongsBuilderList().forEach(song -> {
-                if (song.hasArtist() && song.getArtist().getArtistUri().equals(artistUri)) {
-                    song.setArtist(artist);
+    public void updateSongWithArtist(String artistUri, Artist artist) {
+        inMemoryPlaylists.values().forEach(playlistBuilder -> {
+            playlistBuilder.getSongs().forEach(songBuilder -> {
+                if (songBuilder.getArtist() != null && artistUri.equals(songBuilder.getArtist().getArtistUri())) {
+                    songBuilder.setArtist(artist); // Update the artist field
                 }
             });
         });
     }
 
-    public boolean isPlaylistComplete(PlaylistOuterClass.Playlist.Builder playlist) {
-        return playlist.getSongsList().stream().allMatch(PlaylistOuterClass.Song::hasArtist);
+    public boolean isPlaylistComplete(Playlist.Builder playlistBuilder) {
+        return playlistBuilder.getSongs().stream().allMatch(song -> song.getArtist() != null);
     }
 
-    public PlaylistOuterClass.Playlist finalizePlaylist(int playlistId) {
-        PlaylistOuterClass.Playlist.Builder playlist = inMemoryPlaylists.remove(playlistId);
-        return playlist != null ? playlist.build() : null;
+    public Playlist finalizePlaylist(int playlistId) {
+        Playlist.Builder playlistBuilder = inMemoryPlaylists.remove(playlistId);
+        if (playlistBuilder != null) {
+            return playlistBuilder.build();
+        }
+        return null;
     }
 
-    public Map<Integer, PlaylistOuterClass.Playlist.Builder> getAllPlaylists() {
+    public Map<Integer, Playlist.Builder> getAllPlaylists() {
         return inMemoryPlaylists;
     }
 }
