@@ -1,18 +1,17 @@
 package big.data.ingestion.controllers;
 
 import big.data.ingestion.components.PlaylistManager;
-import big.data.ingestion.data.ArtistRequest;
-import big.data.ingestion.data.Playlist;
-import big.data.ingestion.data.Song;
-import big.data.ingestion.data.Origin;
+import big.data.ingestion.data.*;
 import big.data.ingestion.services.PlaylistEnrichmentConsumer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -107,7 +106,8 @@ public class PlaylistIngestionController {
         playlistBuilder.setNumAlbums(playlistNode.get("num_albums").asInt());
         playlistBuilder.setPid(playlistNode.get("pid").asInt());
         playlistBuilder.setOrigin(Origin.DATASET);
-        playlistBuilder.setGenres(new HashMap<>()); // Set genres as an empty map initially
+        playlistBuilder.setGenres(new HashMap<>()); // Initialize genres as an empty map
+        playlistBuilder.setSongs(new ArrayList<>()); // Initialize songs list
 
         playlistNode.get("tracks").forEach(trackNode -> {
             Song.Builder songBuilder = Song.newBuilder();
@@ -115,7 +115,15 @@ public class PlaylistIngestionController {
             songBuilder.setTrackName(trackNode.get("track_name").asText());
             songBuilder.setDurationMs(trackNode.get("duration_ms").asText());
 
-            songBuilder.setArtist(null); // Artist will be set during enrichment
+            Artist.Builder artistBuilder = Artist.newBuilder();
+            artistBuilder.setArtistName(trackNode.get("artist_name").asText());
+            artistBuilder.setArtistUri(trackNode.get("artist_uri").asText());
+            artistBuilder.setGenres(new ArrayList<String>());
+            artistBuilder.getGenres().add("placeholder1");
+            artistBuilder.getGenres().add("placeholder2");
+            artistBuilder.setPopularity(0);
+
+            songBuilder.setArtist(artistBuilder.build());
             playlistBuilder.getSongs().add(songBuilder.build());
         });
 

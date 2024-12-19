@@ -1,5 +1,4 @@
-# Local Kafka setup
-version: '3.8'
+version: "3.8"
 services:
   zookeeper:
     image: bitnami/zookeeper:latest
@@ -24,17 +23,44 @@ services:
       - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT
-      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
     ports:
       - "9092:9092"
     depends_on:
       zookeeper:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "kafka:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
 
-  ingestion-api:
-    image: ingestion-api
-    container_name: ingestion-api
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.5.0
+    container_name: schema-registry
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     ports:
-      - "8080:8080"
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  schema-registrar:
+    image: alpine:latest
+    container_name: schema-registrar
+    depends_on:
+      schema-registry:
+        condition: service_healthy
+    volumes:
+      - ./src/main/avro:/schemas
+      - ./register-schemas.sh:/register-schemas.sh
+    entrypoint: [ "sh", "-c", "apk add --no-cache curl jq && sh /register-schemas.sh" ]

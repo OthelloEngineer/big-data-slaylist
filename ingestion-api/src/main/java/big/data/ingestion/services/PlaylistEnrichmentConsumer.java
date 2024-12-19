@@ -15,12 +15,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PlaylistEnrichmentConsumer {
 
     private final PlaylistManager playlistManager;
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<String, Playlist> kafkaTemplate;
     private final Set<String> processedArtistUris = ConcurrentHashMap.newKeySet();
     private final Set<String> pendingArtistUris = ConcurrentHashMap.newKeySet();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public PlaylistEnrichmentConsumer(PlaylistManager playlistManager, KafkaTemplate<String, String> kafkaTemplate) {
+    public PlaylistEnrichmentConsumer(PlaylistManager playlistManager, KafkaTemplate<String, Playlist> kafkaTemplate) {
         this.playlistManager = playlistManager;
         this.kafkaTemplate = kafkaTemplate;
     }
@@ -50,8 +50,7 @@ public class PlaylistEnrichmentConsumer {
             if (playlistManager.isPlaylistComplete(playlistBuilder)) {
                 try {
                     Playlist finalizedPlaylist = playlistBuilder.build();
-                    String jsonPlaylist = objectMapper.writeValueAsString(finalizedPlaylist);
-                    kafkaTemplate.send("PLAYLISTS", String.valueOf(playlistId), jsonPlaylist);
+                    kafkaTemplate.send("PLAYLISTS", String.valueOf(playlistId), finalizedPlaylist);
                     System.out.println("Finalized and published playlist: " + playlistId);
                     playlistManager.finalizePlaylist(playlistId);
                 } catch (Exception e) {
