@@ -7,7 +7,7 @@ import time
 app = Flask(__name__)
 
 # Kafka configuration
-KAFKA_BROKER = 'localhost:9092'
+KAFKA_BROKER = 'localhost:9093'
 ARTISTID_TOPIC = 'ARTISTID'
 ARTIST_TOPIC = 'ARTIST'
 PLAYLISTS_TOPIC = 'PLAYLISTS'
