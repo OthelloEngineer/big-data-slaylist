@@ -1,22 +1,37 @@
-import requests
 import json
+import requests
+import os
+import re
 
-def post_json_file(file_path, url):
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    response = requests.post(url, json=data)
-    return response
+# Path to the data folder
+data_folder = os.path.join(os.path.dirname(__file__), 'data')
 
 # Define the URL
-url = 'http://localhost:8888/ingest/dataset'
+url = 'http://localhost:8888/process_dataset'
 
-# Post the first JSON file
-response1 = post_json_file('mpd.slice.0-999.json', url)
-print(response1.status_code)
-print(response1.json())
+# Natural sorting function
+def natural_sort_key(s):
+    return [int(text) if text.isdigit() else text.lower() for text in re.split('(\d+)', s)]
 
-# If the first request is successful, post the second JSON file
-if response1.status_code == 200 and response1.json().get("status") == "ok":
-    response2 = post_json_file('mpd.slice.1000-1999.json', url)
-    print(response2.status_code)
-    print(response2.json())
+# Get a naturally sorted list of JSON files in the data folder
+json_files = sorted([f for f in os.listdir(data_folder) if f.endswith('.json')], key=natural_sort_key)
+
+# Iterate through each file in the sorted list
+for filename in json_files:
+    file_path = os.path.join(data_folder, filename)
+    
+    # Read the contents of the JSON file
+    with open(file_path, 'r') as file:
+        file_contents = json.load(file)
+    
+    # Send the POST request
+    response = requests.post(url, json=file_contents)
+    
+    # Print the response
+    print(f'Posting {filename}: {response.status_code}')
+    print(response.text)
+    
+    # Check if the response is OK before proceeding to the next file
+    if response.status_code != 200:
+        print(f'Failed to post {filename}, stopping.')
+        break
