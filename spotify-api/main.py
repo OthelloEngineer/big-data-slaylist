@@ -15,9 +15,15 @@ import spotify_kafka
 from io import BytesIO
 from dataclasses import asdict
 from fastavro import writer, parse_schema, reader
+from fastavro.schema import load_schema
 
-artist_response_schema = parse_schema("../protobuf/artist_response.avsc")
-artist_request_schema = parse_schema("../protobuf/artist_request.avsc")
+# print ../protobuf/artist_response.avsc
+
+print(f"{os.listdir('../protobuf')}")
+
+artist_request_schema = load_schema("../protobuf/artist_request.avsc")
+artist_schema = load_schema("../protobuf/spotifyapi.Artist.avsc")
+artist_response_schema = load_schema("../protobuf/artist_response.avsc")
 
 token: data.Token = data.Token.new_placeholder_token()
 logger = logging.Logger("uvicorn.error")
@@ -55,18 +61,15 @@ async def fetch_artist(artist_req: data.ArtistRequest, session: aiohttp.ClientSe
 
 def get_artist_id() -> data.ArtistRequest:
     msg_bytes = my_client.get_one_message()
-    msg = reader(BytesIO(msg_bytes), artist_request_schema)
-    return data.ArtistRequest(**msg[0])
+    logger.info(f"Got message: {msg_bytes}")
+    msg = str(msg_bytes.value, "utf-8")
+    return data.ArtistRequest(msg)
 
 
 def produce_artist(artist: data.Artist):
     logger.info(artist)
-    avro_artist =  playlist_avro.ArtistResponse(artist_uri=artist.uri, artist=artist)
-    dict_artist = asdict(avro_artist)
-    bin_io = BytesIO()
-    writer(bin_io, artist_response_schema, [dict_artist])
-    avro_bytes = bin_io.getvalue()
-    my_client.produce(avro_bytes, artist.uri)
+    logger.info(f"Producing artist: {artist.uri}")
+    my_client.produce(asdict(artist), artist.uri)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

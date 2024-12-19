@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: spotifyapi
-        image: othelloengineer/bigdata-spotify-api:0.0.3
+        image: othelloengineer/bigdata-spotify-api:0.0.10
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
