@@ -1,6 +1,7 @@
 import json
 from kafka import KafkaProducer
 from faker import Faker
+import random
 
 fake = Faker()
 KAFKA_BOOTSTRAP: list[str] = ["kafka:9092"]
@@ -11,13 +12,7 @@ topic = "INGESTION"
 def generate_random_data():
     return {
         "name": fake.name(),
-        "address": fake.address(),
-        "email": fake.email(),
-        "phone_number": fake.phone_number(),
-        "company": fake.company(),
-        "job": fake.job(),
-        "city": fake.city(),
-        "timestamp": fake.iso8601()
+        "Followers": random.randint(0,100)
     }
 
 

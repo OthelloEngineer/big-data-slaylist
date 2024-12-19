@@ -8,7 +8,7 @@ http://127.0.0.1:8083/connectors \
         "tasks.max": "3",
         "topics": "INGESTION",
         "hdfs.url": "hdfs://namenode:9000",
-        "flush.size": "3",
+        "flush.size": "100",
         "format.class": "io.confluent.connect.hdfs.json.JsonFormat",
         "key.converter.schemas.enable":"false",
         "key.converter": "org.apache.kafka.connect.storage.StringConverter",
