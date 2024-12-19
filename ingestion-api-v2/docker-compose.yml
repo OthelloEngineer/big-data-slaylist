@@ -34,6 +34,12 @@ services:
       retries: 10
       start_period: 60s
 
+  spotifyapi:
+    image: spotifyapi:latest
+    container_name: spotifyapi
+    expose:
+      - "5000:5000"
+
   # schema-registry:
   #   image: confluentinc/cp-schema-registry:7.5.0
   #   container_name: schema-registry
