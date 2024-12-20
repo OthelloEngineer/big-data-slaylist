@@ -41,7 +41,8 @@ def process_dataset():
 
     playlists = data['playlists']
 
-    artist_uris = set()        
+    artist_uris = set()
+    processed_playlists = []        
     # Process playlists in batches to handle large payloads'
     for playlist in playlists:
         if playlist.get('num_followers', 0) < 10:
@@ -60,9 +61,11 @@ def process_dataset():
             if artist_uri and artist_uri not in artist_uris_global:
                 artist_uris.add(artist_uri)
 
+        processed_playlists.append(playlist)
+
     # Safely append processed playlists to memory
     with lock:
-        playlists_memory.extend(playlists)
+        playlists_memory.extend(processed_playlists)
 
         
     # Update global artist URIs to avoid duplicates in future slices
