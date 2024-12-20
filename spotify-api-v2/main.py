@@ -4,6 +4,7 @@ import requests
 import threading
 import time
 import json
+from threading import Timer
 
 # Flask application
 app = Flask(__name__)
@@ -25,7 +26,8 @@ producer = KafkaProducer(
 )
 
 # Token management
-token = None  # Single token to be used
+tokens = []
+current_token_index = 0
 
 # Processed artist IDs
 processed_artist_ids = set()
@@ -34,15 +36,28 @@ processed_lock = threading.Lock()
 # Batch management
 batch_lock = threading.Lock()
 artist_batch = []
-batch_send_timeout = 5
+batch_send_timeout = 2
 batch_last_updated = time.time()
 
 # API rate limiting
 RATE_LIMIT = 1  # Requests per second
 
-def fetch_artist_data(batch):
-    global token
+def switch_token():
+    global current_token_index
+    if tokens:
+        current_token_index = (current_token_index + 1) % len(tokens)
+        print(f"Token switched to: {tokens[current_token_index]}")
+    Timer(50 * 60, switch_token).start()  # Schedule the next switch
 
+# Fetch artist data
+def fetch_artist_data(batch):
+    global tokens, current_token_index
+
+    if not tokens:
+        print("No tokens available. Please set tokens using the /set_token endpoint.")
+        return
+
+    token = tokens[current_token_index]
     headers = {
         'Authorization': f'Bearer {token}'
     }
@@ -119,17 +134,27 @@ def consume_kafka():
     except Exception as e:
         print(f"Kafka consumer exception: {e}. Restarting consumer loop.")
 
-# Token refresh endpoint
+# Token management endpoints
 @app.route('/set_token/<new_token>', methods=['POST'])
 def set_token(new_token):
-    global token
+    global tokens
 
     if new_token:
-        token = new_token
-        print("Token updated successfully.")
-        return {"message": "Token updated successfully"}, 200
+        tokens.append(new_token)
+        print(f"Token {new_token} added successfully.")
+        return {"message": f"Token {new_token} added successfully"}, 200
     else:
         return {"error": "Token is required"}, 400
+
+@app.route('/current_token', methods=['GET'])
+def get_current_token():
+    if tokens:
+        return {"current_token": tokens[current_token_index]}, 200
+    else:
+        return {"error": "No tokens available"}, 400
+
+# Start the token switch timer
+Timer(50 * 60, switch_token).start()
 
 # Start Flask and background threads
 if __name__ == '__main__':

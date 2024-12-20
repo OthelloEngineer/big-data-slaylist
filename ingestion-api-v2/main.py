@@ -77,15 +77,55 @@ def process_dataset():
         except Exception as e:
             print(f"Error sending artist URI {uri} to Kafka: {e}")
 
+    # Wait for all artist data to be enriched
     while True:
         with lock:
-            if not playlists_memory:
+            if len(artist_uris_global) == len(artist_data_store):
+                print("All artist data has been enriched.")
                 break
 
-        print(f"Waiting for playlists to process. Remaining in memory: {len(playlists_memory)}")
+        print(f"Waiting for artist data enrichment. Progress: {len(artist_data_store)}/{len(artist_uris_global)}")
         time.sleep(1)
 
-    return jsonify({"status": "OK"}), 200
+    # Call the separate processing logic after enrichment
+    process_playlists()
+    while True:
+        if playlists_memory == []:
+            return jsonify({"status": "OK"}), 200
+        time.sleep(1)
+
+        
+    
+    
+
+def process_playlists():
+    global playlists_memory
+
+    with lock:
+        for playlist in playlists_memory:
+            print(f"Processing playlist: {playlist.get('name', 'Unnamed')}")
+            genre_counts = {}
+            for track in playlist.get('tracks', []):
+                artist_uri = track.get('artist_uri')
+                if artist_uri in artist_data_store:
+                    track['artist_data'] = artist_data_store[artist_uri]
+                    genres = artist_data_store[artist_uri].get('genres', [])
+                    for genre in genres:
+                        genre_counts[genre] = genre_counts.get(genre, 0) + 1
+            playlist['genre_counts'] = genre_counts
+            print(f"Processed playlist: {playlist.get('name', 'Unnamed')}")
+
+        print("Publishing all playlists to Kafka.")
+        try:
+            for playlist in playlists_memory:
+                producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']), value=playlist)
+            producer.flush()
+            print("All playlists have been published.")
+        except Exception as e:
+            print(f"Error publishing playlists: {e}")
+
+        # Clear the playlists_memory list after processing
+        playlists_memory = []
 
 @app.route('/user_playlist', methods=['POST'])
 def user_playlist():
@@ -115,32 +155,6 @@ def consume_artist_updates():
 
             print(f"Received and stored artist data: {artist_uri}. Total artists in memory: {len(artist_data_store)}")
 
-            with lock:
-                for playlist in playlists_memory:
-                    genre_counts = {}
-                    for track in playlist.get('tracks', []):
-                        if track.get('artist_uri') == artist_uri:
-                            track['artist_data'] = artist_data
-                            genres = artist_data.get('genres', [])
-                            for genre in genres:
-                                genre_counts[genre] = genre_counts.get(genre, 0) + 1
-                    playlist['genre_counts'] = genre_counts
-
-                all_updated = all(
-                    all('artist_data' in track for track in playlist['tracks'])
-                    for playlist in playlists_memory
-                )
-
-                if all_updated:
-                    for playlist in playlists_memory:
-                        try:
-                            producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']), value=playlist)
-                            producer.flush()
-                            print(f"Published updated playlist: {playlist.get('name', 'Unnamed')}")
-                        except Exception as e:
-                            print(f"Error publishing updated playlist: {e}")
-
-                    playlists_memory = []
         except Exception as e:
             print(f"Error processing artist update: {e}")
 

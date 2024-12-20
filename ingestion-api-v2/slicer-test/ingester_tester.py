@@ -7,7 +7,7 @@ import re
 data_folder = os.path.join(os.path.dirname(__file__), 'data')
 
 # Define the URL
-url = 'http://localhost:8888/process_dataset'
+url = 'http://10.123.3.156:30088/process_dataset'
 
 # Natural sorting function
 def natural_sort_key(s):

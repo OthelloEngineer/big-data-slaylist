@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: spotifyapi
+  name: spotify-api
 spec:
   selector:
     matchLabels:
-      app: spotifyapi
-  serviceName: spotifyapi
+      app: spotify-api
+  serviceName: spotify-api
   replicas: 1
   template:
     metadata:
       labels:
-        app: spotifyapi
+        app: spotify-api
     spec:
       containers:
-      - name: spotifyapi
+      - name: spotify-api
         image: ofhansen/spotify-api:latest
         imagePullPolicy: Always
         ports:
@@ -44,10 +44,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: spotifyapi
+  name: spotify-api
 spec:
   selector:
-    app: spotifyapi
+    app: spotify-api
   ports:
   - protocol: TCP
     port: 5000
