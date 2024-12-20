@@ -15,12 +15,13 @@ PLAYLISTS_TOPIC = 'PLAYLISTS'
 producer = KafkaProducer(
     bootstrap_servers=KAFKA_BROKER,
     value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-    key_serializer=lambda k: k.encode('utf-8')  # Serialize the key as UTF-8
+    key_serializer=lambda k: k.encode('utf-8')
 )
 
 consumer = KafkaConsumer(
     ARTIST_TOPIC,
     bootstrap_servers=KAFKA_BROKER,
+    auto_offset_reset='earliest',
     value_deserializer=lambda m: json.loads(m.decode('utf-8'))
 )
 
@@ -34,27 +35,24 @@ lock = threading.Lock()
 def process_dataset():
     global playlists_memory, artist_uris_global
 
-    # Step 1: Receive playlists
     data = request.json
     if not data or 'playlists' not in data:
         return jsonify({"error": "Invalid input, 'playlists' key is missing"}), 400
 
     playlists = data['playlists']
-
     artist_uris = set()
-    processed_playlists = []        
-    # Process playlists in batches to handle large payloads'
+    processed_playlists = []
+
     for playlist in playlists:
         if playlist.get('num_followers', 0) < 10:
-            print(f"Skipping playlist with less than 10 followers: {playlist.get('name', 'Unnamed')}".encode('ascii', errors='ignore').decode())
+            print(f"Skipping playlist with less than 10 followers: {playlist.get('name', 'Unnamed')}")
             continue
 
-        print(f"Processing playlist: {playlist.get('name', 'Unnamed')}".encode('ascii', errors='ignore').decode())
+        print(f"Processing playlist: {playlist.get('name', 'Unnamed')}")
+        playlist['origin'] = "DATASET"
 
-        playlist['origin'] = "DATASET"  # Add origin field
-
-        for track in playlist["tracks"]:
-            artist_uri = track["artist_uri"]
+        for track in playlist.get("tracks", []):
+            artist_uri = track.get("artist_uri")
             if artist_uri in artist_data_store:
                 track["artist_data"] = artist_data_store[artist_uri]
 
@@ -63,85 +61,88 @@ def process_dataset():
 
         processed_playlists.append(playlist)
 
-    # Safely append processed playlists to memory
     with lock:
         playlists_memory.extend(processed_playlists)
 
-        
-    # Update global artist URIs to avoid duplicates in future slices
     artist_uris_global.update(artist_uris)
 
-    print(f"Total unique artist URIs: {len(artist_uris)}")
+    print(f"Total unique artist URIs added: {len(artist_uris)}")
 
-    # Publish unique artist URIs to Kafka
     for uri in artist_uris:
-        value = uri.split(':')[-1]
-        producer.send(ARTISTID_TOPIC, key=uri, value=value)  # Key and value both are artisturi
-        producer.flush()  # Ensure immediate delivery
-        print(f"Published artist URI to ARTISTID with key: {uri}, value: {value}")
+        try:
+            value = uri.split(':')[-1]
+            producer.send(ARTISTID_TOPIC, key=uri, value=value)
+            producer.flush()
+            print(f"Published artist URI to ARTISTID: {uri}")
+        except Exception as e:
+            print(f"Error sending artist URI {uri} to Kafka: {e}")
 
-    # Wait for playlists to be fully processed by the consumer
     while True:
         with lock:
             if not playlists_memory:
                 break
+
         print(f"Waiting for playlists to process. Remaining in memory: {len(playlists_memory)}")
         time.sleep(1)
 
     return jsonify({"status": "OK"}), 200
 
-
 @app.route('/user_playlist', methods=['POST'])
 def user_playlist():
-    playlist = request.json  # This is a dictionary
+    playlist = request.json
     playlist['origin'] = 'USER'
-    
-    # Send the playlist to Kafka
-    producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']), value=playlist)
-    producer.flush()
-    
-    return jsonify({"status": "ok"}), 200
 
+    try:
+        producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']), value=playlist)
+        producer.flush()
+    except Exception as e:
+        print(f"Error sending user playlist to Kafka: {e}")
+        return jsonify({"error": "Failed to send playlist"}), 500
+
+    return jsonify({"status": "ok"}), 200
 
 def consume_artist_updates():
     global playlists_memory
     global artist_data_store
 
     for message in consumer:
-        artist_data = message.value
-        artist_uri = artist_data['uri']
-        artist_data_store[artist_uri] = artist_data
-        
-        # Update playlists in memory with artist data
-        with lock:
-            for playlist in playlists_memory:
-                genre_counts = {}
-                for track in playlist['tracks']:
-                    if track['artist_uri'] == artist_uri:
-                        track['artist_data'] = artist_data
-                    genres = track['artist_data']['genres']
-                    for genre in genres:
-                        if genre in genre_counts:
-                            genre_counts[genre] += 1
-                        else:
-                            genre_counts[genre] = 1
-                playlist['genre_counts'] = genre_counts
+        try:
+            artist_data = message.value
+            artist_uri = artist_data['uri']
 
-        # Check if all playlists are updated
-        with lock:
-            all_updated = all(
-                all('artist_data' in track for track in playlist['tracks'])
-                for playlist in playlists_memory
-            )
+            with lock:
+                artist_data_store[artist_uri] = artist_data
 
-            if all_updated:
-                # Publish updated playlists to PLAYLISTS topic
+            print(f"Received and stored artist data: {artist_uri}. Total artists in memory: {len(artist_data_store)}")
+
+            with lock:
                 for playlist in playlists_memory:
-                    producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']), value=playlist)
-                    producer.flush()
-                    print(f"Published updated playlist: {playlist.get('name', 'Unnamed')}")
-                playlists_memory = []
+                    genre_counts = {}
+                    for track in playlist.get('tracks', []):
+                        if track.get('artist_uri') == artist_uri:
+                            track['artist_data'] = artist_data
+                            genres = artist_data.get('genres', [])
+                            for genre in genres:
+                                genre_counts[genre] = genre_counts.get(genre, 0) + 1
+                    playlist['genre_counts'] = genre_counts
 
+                all_updated = all(
+                    all('artist_data' in track for track in playlist['tracks'])
+                    for playlist in playlists_memory
+                )
+
+                if all_updated:
+                    for playlist in playlists_memory:
+                        try:
+                            producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']), value=playlist)
+                            producer.flush()
+                            print(f"Published updated playlist: {playlist.get('name', 'Unnamed')}")
+                        except Exception as e:
+                            print(f"Error publishing updated playlist: {e}")
+
+                    playlists_memory = []
+        except Exception as e:
+            print(f"Error processing artist update: {e}")
 
 # Start the Kafka consumer thread
 consumer_thread = threading.Thread(target=consume_artist_updates, daemon=True)
@@ -149,4 +150,3 @@ consumer_thread.start()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8888, debug=False)
-

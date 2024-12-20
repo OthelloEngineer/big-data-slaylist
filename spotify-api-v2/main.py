@@ -3,7 +3,6 @@ from kafka import KafkaConsumer, KafkaProducer
 import requests
 import threading
 import time
-import queue
 import json
 
 # Flask application
@@ -26,71 +25,114 @@ producer = KafkaProducer(
 )
 
 # Token management
-tokens = queue.Queue()
-tokens_list = []  # To hold token values
-token_lock = threading.Lock()
+token = None  # Single token to be used
+
+# Processed artist IDs
+processed_artist_ids = set()
+processed_lock = threading.Lock()
+
+# Batch management
+batch_lock = threading.Lock()
+artist_batch = []
+batch_send_timeout = 5
+batch_last_updated = time.time()
 
 # API rate limiting
-RATE_LIMIT = 1  # Requests per second per token
+RATE_LIMIT = 1  # Requests per second
 
-# Function to fetch artist data from Spotify API
-def fetch_artist_data(artist_id):
-    while True:
-        token = tokens.get()
-        try:
-            headers = {
-                'Authorization': f'Bearer {token}'
-            }
-            artist_id_request = artist_id.strip('"')
-            url = f'https://api.spotify.com/v1/artists/{artist_id_request}'
-            response = requests.get(url, headers=headers)
-            print(f"Requesting data for artist_id: {artist_id}")
-            print(f"Response status: {response.status_code}, body: {response.text}")
+def fetch_artist_data(batch):
+    global token
 
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
 
-            if response.status_code == 200:
-                data = response.json()
-                output_key = data['uri']
+    artist_ids = ",".join(batch).replace("\"", "")
+    url = f'https://api.spotify.com/v1/artists?ids={artist_ids}'
+
+    try:
+        response = requests.get(url, headers=headers)
+        print(f"Requesting data for batch: {artist_ids}")
+        print(f"Response status: {response.status_code}, body: {response.text}")
+
+        if response.status_code == 200:
+            artists_data = response.json().get('artists', [])
+            for artist_data in artists_data:
+                output_key = artist_data['uri']
                 output_value = {
-                    'genres': data['genres'],
-                    'name': data['name'],
-                    'popularity': data['popularity'],
-                    'uri': data['uri']
+                    'genres': artist_data['genres'],
+                    'name': artist_data['name'],
+                    'popularity': artist_data['popularity'],
+                    'uri': artist_data['uri']
                 }
                 producer.send(OUTPUT_TOPIC, key=output_key, value=output_value)
-                tokens.put(token)  # Return the token back to the queue
-                break
-            elif response.status_code == 429:
-                retry_after = int(response.headers.get('Retry-After', 1))
-                time.sleep(retry_after)
-            else:
-                print(f"Error: {response.status_code} for artist {artist_id}")
-                tokens.put(token)  # Return the token back to the queue
-                break
-        except Exception as e:
-            print(f"Exception: {e}")
-            tokens.put(token)  # Return the token back to the queue
-        finally:
-            time.sleep(1 / RATE_LIMIT)  # Enforce rate limiting
+                producer.flush()
+
+                with processed_lock:
+                    processed_artist_ids.add(artist_data['id'])
+
+        elif response.status_code == 429:
+            retry_after = int(response.headers.get('Retry-After', 1))
+            print(f"Rate limited. Retrying after {retry_after} seconds.")
+            time.sleep(retry_after)
+
+        else:
+            print(f"Error: {response.status_code} for batch {artist_ids}")
+
+    except Exception as e:
+        print(f"Exception fetching artist data: {e}")
+
+    time.sleep(1 / RATE_LIMIT)  # Apply rate limiting
+
+def process_batches():
+    global artist_batch, batch_last_updated
+
+    while True:
+        time.sleep(1)  # Check every second
+
+        with batch_lock:
+            if artist_batch and (time.time() - batch_last_updated >= batch_send_timeout):
+                print(f"Timeout reached. Sending batch of size {len(artist_batch)}")
+                batch_to_process = list(artist_batch)
+                artist_batch.clear()
+                batch_last_updated = time.time()
+                fetch_artist_data(batch_to_process)
 
 # Kafka consumer thread
 def consume_kafka():
-    for message in consumer:
-        artist_id = message.value.decode('utf-8')
-        threading.Thread(target=fetch_artist_data, args=(artist_id,)).start()
+    global batch_last_updated, artist_batch
+
+    try:
+        for message in consumer:
+            artist_id = message.value.decode('utf-8')
+
+            with batch_lock:
+                artist_batch.append(artist_id)
+                batch_last_updated = time.time()
+
+                if len(artist_batch) >= 50:
+                    print("Batch size reached. Sending batch.")
+                    batch_to_process = list(artist_batch)
+                    artist_batch.clear()
+                    batch_last_updated = time.time()
+                    fetch_artist_data(batch_to_process)
+    except Exception as e:
+        print(f"Kafka consumer exception: {e}. Restarting consumer loop.")
 
 # Token refresh endpoint
-@app.route('/add_token/<token>', methods=['POST'])
-def add_token(token):
-    if token:
-        with token_lock:
-            tokens_list.append(token)
-            tokens.put(token)
-        return {"message": "Token added successfully"}, 200
+@app.route('/set_token/<new_token>', methods=['POST'])
+def set_token(new_token):
+    global token
+
+    if new_token:
+        token = new_token
+        print("Token updated successfully.")
+        return {"message": "Token updated successfully"}, 200
     else:
         return {"error": "Token is required"}, 400
 
-# Start Flask and Kafka consumer
+# Start Flask and background threads
 if __name__ == '__main__':
     threading.Thread(target=consume_kafka, daemon=True).start()
+    threading.Thread(target=process_batches, daemon=True).start()
     app.run(host='0.0.0.0', port=5000)
