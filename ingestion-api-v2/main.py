@@ -77,12 +77,22 @@ def process_dataset():
         except Exception as e:
             print(f"Error sending artist URI {uri} to Kafka: {e}")
 
-    # Wait for all artist data to be enriched
+    # Wait for all artist data to be enriched with a timeout
+    start_time = time.time()
     while True:
+        elapsed_time = time.time() - start_time
         with lock:
             if len(artist_uris_global) == len(artist_data_store):
                 print("All artist data has been enriched.")
                 break
+
+        if len(artist_uris) == 0:
+            break
+
+        if elapsed_time > 12:  # Timeout after 14 seconds
+            print("Timeout exceeded. Should be in next batch.")
+            
+            break
 
         print(f"Waiting for artist data enrichment. Progress: {len(artist_data_store)}/{len(artist_uris_global)}")
         time.sleep(1)
@@ -93,10 +103,6 @@ def process_dataset():
         if playlists_memory == []:
             return jsonify({"status": "OK"}), 200
         time.sleep(1)
-
-        
-    
-    
 
 def process_playlists():
     global playlists_memory
