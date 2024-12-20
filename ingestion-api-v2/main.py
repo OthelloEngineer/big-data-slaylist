@@ -72,7 +72,7 @@ def process_dataset():
 
     # Publish unique artist URIs to Kafka
     for uri in artist_uris:
-        producer.send(ARTISTID_TOPIC, key=uri, value=uri)  # Key and value both are artisturi
+        producer.send(ARTISTID_TOPIC, key=uri, value=uri.split(':')[-1])  # Key and value both are artisturi
         producer.flush()  # Ensure immediate delivery
         print(f"Published artist URI to ARTISTID with key: {uri}, value: {uri}")
 
@@ -87,13 +87,25 @@ def process_dataset():
     return jsonify({"status": "OK"}), 200
 
 
+@app.route('/user_playlist', methods=['POST'])
+def user_playlist():
+    playlist = request.json  # This is a dictionary
+    playlist['origin'] = 'USER'
+    
+    # Send the playlist to Kafka
+    producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']).encode('utf-8'), value=json.dumps(playlist).encode('utf-8'))
+    producer.flush()
+    
+    return jsonify({"status": "ok"}), 200
+
+
 def consume_artist_updates():
     global playlists_memory
     global artist_data_store
 
     for message in consumer:
         artist_data = message.value
-        artist_uri = message.key
+        artist_uri = artist_data['uri']
         artist_data_store[artist_uri] = artist_data
         
         # Update playlists in memory with artist data
@@ -121,7 +133,7 @@ def consume_artist_updates():
             if all_updated:
                 # Publish updated playlists to PLAYLISTS topic
                 for playlist in playlists_memory:
-                    producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']), value=playlist)
+                    producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']), value=json.dumps(playlist).encode('utf-8'))
                     producer.flush()
                     print(f"Published updated playlist: {playlist.get('name', 'Unnamed')}")
                 playlists_memory = []
