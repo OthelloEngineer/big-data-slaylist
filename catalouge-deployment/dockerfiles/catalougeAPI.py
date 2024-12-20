@@ -3,7 +3,10 @@ import requests
 import os
 from querryCatalouge import get_catalouge
 import json
+from flask_cors import CORS
+
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/test')
 def index():
