@@ -75,9 +75,10 @@ def process_dataset():
 
     # Publish unique artist URIs to Kafka
     for uri in artist_uris:
-        producer.send(ARTISTID_TOPIC, key=uri, value=uri.split(':')[-1])  # Key and value both are artisturi
+        value = uri.split(':')[-1]
+        producer.send(ARTISTID_TOPIC, key=uri, value=value)  # Key and value both are artisturi
         producer.flush()  # Ensure immediate delivery
-        print(f"Published artist URI to ARTISTID with key: {uri}, value: {uri}")
+        print(f"Published artist URI to ARTISTID with key: {uri}, value: {value}")
 
     # Wait for playlists to be fully processed by the consumer
     while True:
