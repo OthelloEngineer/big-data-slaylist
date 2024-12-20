@@ -5,8 +5,11 @@ import { PlaylistList } from './components/PlaylistList/PlaylistList';
 import { SidebarFilter } from './components/SidebarFilter/SidebarFilter';
 import { SingleGenreSelector } from './components/SingleGenreSelector/SingleGenreSelector';
 import { GeneratePlaylist } from './components/GeneratePlaylist/GeneratePlaylist';
+import { fetchPlaylistsByGenres } from './services/apiService';
+import { TestButton } from './components/TestButton/TestButton';
 
-import { fetchPlaylistsByGenres } from './services/api';
+
+//import { fetchPlaylistsByGenres } from './services/api';
 import './index.css';
 
 function App() {
@@ -16,6 +19,8 @@ function App() {
   const [error, setError] = useState(null);
   const [genre1, setGenre1] = useState(null);
   const [genre2, setGenre2] = useState(null);
+
+  
 
   // Combine selected genres to check the Generate button's state
   const singleSelectedGenres = [genre1, genre2].filter(Boolean);
@@ -29,29 +34,45 @@ function App() {
   const isGenreSelected = (genre) =>
     selectedGenres.some((g) => g.id === genre.id);
 
-    // Fetch playlists whenever selectedGenres changes
-    useEffect(() => {
-      const fetchPlaylists = async () => {
-        try {
-          setLoading(true);
-          setError(null);
-  
-          if (selectedGenres.length === 0) {
-            setPlaylists([]); // No genres selected
-          } else {
-            const data = await fetchPlaylistsByGenres(selectedGenres.map((g) => g.name));
-            setPlaylists(data);
-          }
-        } catch (err) {
-          setError(err.message);
-          setPlaylists([]);
-        } finally {
-          setLoading(false);
-        }
-      };
-  
-      fetchPlaylists();
-    }, [selectedGenres]);
+  const handleFetchPlaylists = async (genre1, genre2) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await fetchPlaylistsByGenres(genre1, genre2);
+      setPlaylists(data);
+    } catch (err) {
+      console.error("Error fetching playlists:", err.message);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchPlaylists = async () => {
+      if (!genre1 || !genre2) {
+        setPlaylists([]);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const data = await fetchPlaylistsByGenres(genre1, genre2);
+        console.log("Fetched Playlists:", data); // Debug log
+        setPlaylists(data);
+      } catch (err) {
+        setError(err.message);
+        setPlaylists([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlaylists();
+  }, [genre1, genre2]); // Fetch whenever genre1 or genre2 changes
 
     // Exclude genres already selected in the other dropdown
     const excludedGenresForGenre1 = genre2 ? [genre2] : [];
@@ -68,14 +89,14 @@ function App() {
     setPlaylists((prev) => {
       const sorted = [...prev].sort((a, b) => {
         if (popularitySortOrder === 'desc') {
-          return b.followers - a.followers; // Sort most popular
+          return b.num_followers - a.num_followers; // Sort by most followers
         } else {
-          return a.followers - b.followers; // Sort least popular
+          return a.num_followers - b.num_followers; // Sort by least followers
         }
       });
       return sorted;
     });
-    // Toggle sort order
+    // Toggle sort order between ascending and descending
     setPopularitySortOrder((prevOrder) => (prevOrder === 'desc' ? 'asc' : 'desc'));
   };
 
@@ -141,6 +162,7 @@ function App() {
                   />
                 </div>
               </div>
+              <TestButton />
             </div>
           </div>
         </div>

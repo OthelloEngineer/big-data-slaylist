@@ -26,12 +26,23 @@ export function GeneratePlaylist({ disabled, genre1, genre2 }) {
     return names[Math.floor(Math.random() * names.length)]; // Randomize name
   };
 
+  const handleClick = () => {
+    if (onGenerate && genre1 && genre2) {
+      onGenerate(genre1, genre2);
+    }
+  };
+
   // Handle playlist generation
   const handleGeneratePlaylist = () => {
     if (genre1 && genre2) {
       setPlaylistName(generatePlaylistName(genre1, genre2));
       setPlaylist(generateMockPlaylist());
       console.log("Generated Playlist:", playlistName);
+
+    // Log the selected genres to the console
+    console.log('Selected Genres:');
+    console.log('Genre 1:', genre1 ? genre1.name : 'None selected');
+    console.log('Genre 2:', genre2 ? genre2.name : 'None selected');
     }
   };
 
