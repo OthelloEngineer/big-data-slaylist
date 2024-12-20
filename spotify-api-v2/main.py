@@ -28,6 +28,7 @@ producer = KafkaProducer(
 # Token management
 tokens = []
 current_token_index = 0
+switch_timer = None
 
 # Processed artist IDs
 processed_artist_ids = set()
@@ -47,13 +48,20 @@ def log_token_switch():
         print(f"Token switched to: {tokens[current_token_index]} and is being used.")
         time.sleep(0.5)
 
+def reset_switch_timer():
+    global switch_timer
+    if switch_timer:
+        switch_timer.cancel()
+    switch_timer = Timer(50 * 60, switch_token)
+    switch_timer.start()
+
 def switch_token():
     global current_token_index
     if tokens:
         current_token_index = (current_token_index + 1) % len(tokens)
         print(f"Token switched to: {tokens[current_token_index]}")
         threading.Thread(target=log_token_switch, daemon=True).start()
-    Timer(50 * 60, switch_token).start()  # Schedule the next switch
+        reset_switch_timer()  # Reset the timer whenever a token is switched
 
 # Fetch artist data
 def fetch_artist_data(batch):
@@ -74,8 +82,8 @@ def fetch_artist_data(batch):
 
         try:
             response = requests.get(url, headers=headers)
-            # print(f"Requesting data for batch: {artist_ids}")
-            # print(f"Response status: {response.status_code}, body: {response.text}")
+            print(f"Requesting data for batch: {artist_ids}")
+            print(f"Response status: {response.status_code}, body: {response.text}")
 
             if response.status_code == 200:
                 artists_data = response.json().get('artists', [])
@@ -98,6 +106,7 @@ def fetch_artist_data(batch):
                 print("Rate limited. Switching to next token.")
                 current_token_index = (current_token_index + 1) % len(tokens)
                 threading.Thread(target=log_token_switch, daemon=True).start()
+                reset_switch_timer()  # Reset the timer on token switch
 
             else:
                 print(f"Error: {response.status_code} for batch {artist_ids}")
@@ -164,7 +173,7 @@ def get_current_token():
         return {"error": "No tokens available"}, 400
 
 # Start the token switch timer
-Timer(50 * 60, switch_token).start()
+reset_switch_timer()
 
 # Start Flask and background threads
 if __name__ == '__main__':
