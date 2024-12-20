@@ -106,7 +106,13 @@ def fetch_artist_data(batch):
                 print("Rate limited. Switching to next token.")
                 current_token_index = (current_token_index + 1) % len(tokens)
                 threading.Thread(target=log_token_switch, daemon=True).start()
-                reset_switch_timer()  # Reset the timer on token switch
+                reset_switch_timer()  
+
+            elif response.status_code == 401:
+                print("Token  expired. Switching to next token.")
+                current_token_index = (current_token_index + 1) % len(tokens)
+                threading.Thread(target=log_token_switch, daemon=True).start()
+                reset_switch_timer()
 
             else:
                 print(f"Error: {response.status_code} for batch {artist_ids}")

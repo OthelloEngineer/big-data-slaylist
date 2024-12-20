@@ -110,6 +110,8 @@ def process_dataset():
             
             break
 
+        # I dont know why on God's green earth I cant just remove the uris that dont get data sent back, but some data 
+        # is just missing and I hate everything 
         print(f"Waiting for artist data enrichment. Progress: {len(artist_data_store)}/{len(artist_uris_global)}")
         time.sleep(1)
 
