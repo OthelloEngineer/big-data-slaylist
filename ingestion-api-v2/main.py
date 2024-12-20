@@ -30,10 +30,13 @@ playlists_memory = []
 artist_uris_global = set()
 artist_data_store = {}
 lock = threading.Lock()
+slice_count = 0
 
 @app.route('/process_dataset', methods=['POST'])
 def process_dataset():
-    global playlists_memory, artist_uris_global
+    global playlists_memory, artist_uris_global, slice_count
+
+    slice_count += 1
 
     data = request.json
     if not data or 'playlists' not in data:
@@ -86,10 +89,23 @@ def process_dataset():
                 print("All artist data has been enriched.")
                 break
 
+        #skip if no new artists
         if len(artist_uris) == 0:
             break
+        
+        time_break = 12  # Default timeout
 
-        if elapsed_time > 12:  # Timeout after 14 seconds
+        if slice_count >= 25:
+            time_break = 10
+
+        if slice_count >= 50:
+            time_break = 8
+
+        if slice_count >= 70:
+            time_break = 6
+
+
+        if elapsed_time > time_break:  # Timeout after less time as more data has been consumed
             print("Timeout exceeded. Should be in next batch.")
             
             break
