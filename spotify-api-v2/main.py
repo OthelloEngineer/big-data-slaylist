@@ -42,11 +42,17 @@ batch_last_updated = time.time()
 # API rate limiting
 RATE_LIMIT = 1  # Requests per second
 
+def log_token_switch():
+    for _ in range(120):  # Log every 0.5 seconds for 60 seconds
+        print(f"Token switched to: {tokens[current_token_index]} and is being used.")
+        time.sleep(0.5)
+
 def switch_token():
     global current_token_index
     if tokens:
         current_token_index = (current_token_index + 1) % len(tokens)
         print(f"Token switched to: {tokens[current_token_index]}")
+        threading.Thread(target=log_token_switch, daemon=True).start()
     Timer(50 * 60, switch_token).start()  # Schedule the next switch
 
 # Fetch artist data
@@ -57,47 +63,51 @@ def fetch_artist_data(batch):
         print("No tokens available. Please set tokens using the /set_token endpoint.")
         return
 
-    token = tokens[current_token_index]
-    headers = {
-        'Authorization': f'Bearer {token}'
-    }
+    while True:
+        token = tokens[current_token_index]
+        headers = {
+            'Authorization': f'Bearer {token}'
+        }
 
-    artist_ids = ",".join(batch).replace("\"", "")
-    url = f'https://api.spotify.com/v1/artists?ids={artist_ids}'
+        artist_ids = ",".join(batch).replace("\"", "")
+        url = f'https://api.spotify.com/v1/artists?ids={artist_ids}'
 
-    try:
-        response = requests.get(url, headers=headers)
-        print(f"Requesting data for batch: {artist_ids}")
-        print(f"Response status: {response.status_code}, body: {response.text}")
+        try:
+            response = requests.get(url, headers=headers)
+            # print(f"Requesting data for batch: {artist_ids}")
+            # print(f"Response status: {response.status_code}, body: {response.text}")
 
-        if response.status_code == 200:
-            artists_data = response.json().get('artists', [])
-            for artist_data in artists_data:
-                output_key = artist_data['uri']
-                output_value = {
-                    'genres': artist_data['genres'],
-                    'name': artist_data['name'],
-                    'popularity': artist_data['popularity'],
-                    'uri': artist_data['uri']
-                }
-                producer.send(OUTPUT_TOPIC, key=output_key, value=output_value)
-                producer.flush()
+            if response.status_code == 200:
+                artists_data = response.json().get('artists', [])
+                for artist_data in artists_data:
+                    output_key = artist_data['uri']
+                    output_value = {
+                        'genres': artist_data['genres'],
+                        'name': artist_data['name'],
+                        'popularity': artist_data['popularity'],
+                        'uri': artist_data['uri']
+                    }
+                    producer.send(OUTPUT_TOPIC, key=output_key, value=output_value)
+                    producer.flush()
 
-                with processed_lock:
-                    processed_artist_ids.add(artist_data['id'])
+                    with processed_lock:
+                        processed_artist_ids.add(artist_data['id'])
+                break
 
-        elif response.status_code == 429:
-            retry_after = int(response.headers.get('Retry-After', 1))
-            print(f"Rate limited. Retrying after {retry_after} seconds.")
-            time.sleep(retry_after)
+            elif response.status_code == 429:
+                print("Rate limited. Switching to next token.")
+                current_token_index = (current_token_index + 1) % len(tokens)
+                threading.Thread(target=log_token_switch, daemon=True).start()
 
-        else:
-            print(f"Error: {response.status_code} for batch {artist_ids}")
+            else:
+                print(f"Error: {response.status_code} for batch {artist_ids}")
+                break
 
-    except Exception as e:
-        print(f"Exception fetching artist data: {e}")
+        except Exception as e:
+            print(f"Exception fetching artist data: {e}")
+            break
 
-    time.sleep(1 / RATE_LIMIT)  # Apply rate limiting
+        time.sleep(1 / RATE_LIMIT)  # Apply rate limiting
 
 def process_batches():
     global artist_batch, batch_last_updated
