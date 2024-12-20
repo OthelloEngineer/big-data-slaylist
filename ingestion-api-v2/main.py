@@ -86,10 +86,9 @@ def consume_artist_updates():
     global playlists_memory
 
     for message in consumer:
-        artist_update = message.value
-        artist_uri = artist_update.get('artisturi')
-        artist_data = artist_update.get('data')
-
+        artist_data = message.value
+        artist_uri = message.key
+        
         # Update playlists in memory with artist data
         with lock:
             for playlist in playlists_memory:
@@ -115,7 +114,7 @@ def consume_artist_updates():
             if all_updated:
                 # Publish updated playlists to PLAYLISTS topic
                 for playlist in playlists_memory:
-                    producer.send(PLAYLISTS_TOPIC, key=str(playlist.get('pid')), value=playlist)
+                    producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']), value=playlist)
                     producer.flush()
                     print(f"Published updated playlist: {playlist.get('name', 'Unnamed')}")
                 playlists_memory = []
