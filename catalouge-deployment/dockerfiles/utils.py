@@ -39,7 +39,7 @@ class SPARK_ENV(Enum):
     ]
 
 
-def get_spark_context(app_name: str, config: SPARK_ENV, additional_conf: dict = None) -> SparkSession:
+def get_spark_context(app_name: str, config: SPARK_ENV, additional_conf: dict = None, log_level: str = "ALL") -> SparkSession:
     """Get a Spark context with the given configuration and optional additional configurations."""
     spark_conf = SparkConf().setAll(config.value).setAppName(app_name)
 
@@ -47,4 +47,8 @@ def get_spark_context(app_name: str, config: SPARK_ENV, additional_conf: dict = 
     if additional_conf:
         spark_conf.setAll(additional_conf.items())
 
-    return SparkSession.builder.config(conf=spark_conf).getOrCreate()
+    spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
+
+    spark.sparkContext.setLogLevel(log_level)
+
+    return spark

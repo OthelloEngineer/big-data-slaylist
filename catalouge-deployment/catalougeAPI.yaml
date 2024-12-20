@@ -26,10 +26,9 @@ spec:
     spec:
       containers: 
       - name: catalouge-deployment
-        image: sindahlof/catalougeapi:test
+        image: sindahlof/catalougeapi:latest
         ports:
         - containerPort: 5000
-
 
 
 

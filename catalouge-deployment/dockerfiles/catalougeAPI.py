@@ -12,8 +12,9 @@ def index():
 @app.route('/catalouge', methods=['POST'])
 def catalouge():
     data = request.json
-    playlists = get_catalouge(data["genre1"],data["genre2"])
-   
+    app.logger.debug(f"Received data: {data}")
+    playlists = get_catalouge(data["genre1"], data["genre2"])
+    app.logger.debug(f"Playlists found: {len(playlists)}")
     return jsonify(playlists)
 
 
