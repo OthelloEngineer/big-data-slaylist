@@ -2,18 +2,17 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-RUN apt-get update && \
-    apt-get install -y openjdk-8-jdk wget &&
+COPY dockerfiles/* /app/
 
-ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+RUN apt-get update && \
+    apt-get install -y openjdk-17-jdk wget
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ENV PATH=$JAVA_HOME/bin:$PATH
 
 RUN pip install --upgrade pip && \
-    pip install pyspark
+    pip install -r requirements.txt  
 
-COPY utils.py /app/utils.py
-COPY querryCatalouge.py /app/querryCatalouge.py
+EXPOSE 5000
 
-EXPOSE 7077 8080
-
-CMD ["python3", "querryCatalouge.py"]
+CMD ["python3", "catalougeAPI.py"]

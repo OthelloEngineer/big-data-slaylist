@@ -47,14 +47,17 @@ def filter_playlists_by_genres(df, genre1, genre2):
     return final_df
 
 def get_catalouge(genre1, genre2):
-
-
-
     spark= get_spark_context(app_name="Catalouge", config=SPARK_ENV.K8S)
 
     df = spark.read.schema(schema).json(FS)
     filteret_df = filter_playlists_by_genres(df,genre1,genre2)
     sorteddf = filteret_df.sort(desc("num_followers"))
+    top_playlists = sorteddf.take(100)
+    
+    dict_response = [row.asDict() for row in top_playlists]
+
+    return dict_response
+
     sorteddf.select("name","num_followers","genres").show(truncate=False)
 if __name__ == "__main__":    
     get_catalouge("jazz", "indie")
