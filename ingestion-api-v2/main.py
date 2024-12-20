@@ -27,6 +27,7 @@ consumer = KafkaConsumer(
 # In-memory data structures
 playlists_memory = []
 artist_uris_global = set()
+artist_data_store = {}
 lock = threading.Lock()
 
 @app.route('/process_dataset', methods=['POST'])
@@ -40,12 +41,8 @@ def process_dataset():
 
     playlists = data['playlists']
 
-    # Temporarily store playlists in memory
-    with lock:
-        playlists_memory.extend(playlists)
-
-    # Process playlists in batches to handle large payloads
-    artist_uris = set()
+    artist_uris = set()        
+    # Process playlists in batches to handle large payloads'
     for playlist in playlists:
         if playlist.get('num_followers', 0) < 10:
             print(f"Skipping playlist with less than 10 followers: {playlist.get('name', 'Unnamed')}".encode('ascii', errors='ignore').decode())
@@ -53,13 +50,21 @@ def process_dataset():
 
         print(f"Processing playlist: {playlist.get('name', 'Unnamed')}".encode('ascii', errors='ignore').decode())
 
+        playlist['origin'] = "DATASET"  # Add origin field
+
         for track in playlist["tracks"]:
             artist_uri = track["artist_uri"]
+            if artist_uri in artist_data_store:
+                track["artist_data"] = artist_data_store[artist_uri]
+
             if artist_uri and artist_uri not in artist_uris_global:
                 artist_uris.add(artist_uri)
 
-        playlist['origin'] = "DATASET"
+    # Safely append processed playlists to memory
+    with lock:
+        playlists_memory.extend(playlists)
 
+        
     # Update global artist URIs to avoid duplicates in future slices
     artist_uris_global.update(artist_uris)
 
@@ -84,10 +89,12 @@ def process_dataset():
 
 def consume_artist_updates():
     global playlists_memory
+    global artist_data_store
 
     for message in consumer:
         artist_data = message.value
         artist_uri = message.key
+        artist_data_store[artist_uri] = artist_data
         
         # Update playlists in memory with artist data
         with lock:
