@@ -1,10 +1,11 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: ingestion-api
   labels:
     app: ingestion-api
 spec:
+  serviceName: ingestion-api
   replicas: 1
   selector:
     matchLabels:
@@ -16,7 +17,7 @@ spec:
     spec:
       containers:
       - name: ingestion-api
-        image: ofhansen/ingestion-api:latest # Replace with your Docker image name
+        image: ofhansen/ingestion-api:latest
         ports:
         - containerPort: 8888
         resources:
@@ -45,4 +46,3 @@ spec:
       targetPort: 8888  
       nodePort: 30088   
   type: NodePort
-
