@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: ingestion-api
-        image: your-dockerhub-username/ingestion-api:latest # Replace with your Docker image name
+        image: ofhansen/ingestion-api:latest # Replace with your Docker image name
         ports:
         - containerPort: 8888
         resources:
