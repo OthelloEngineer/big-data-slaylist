@@ -97,7 +97,7 @@ def user_playlist():
     playlist['origin'] = 'USER'
     
     # Send the playlist to Kafka
-    producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']).encode('utf-8'), value=json.dumps(playlist).encode('utf-8'))
+    producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']), value=playlist)
     producer.flush()
     
     return jsonify({"status": "ok"}), 200
@@ -137,7 +137,7 @@ def consume_artist_updates():
             if all_updated:
                 # Publish updated playlists to PLAYLISTS topic
                 for playlist in playlists_memory:
-                    producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']), value=json.dumps(playlist).encode('utf-8'))
+                    producer.send(PLAYLISTS_TOPIC, key=str(playlist['pid']), value=playlist)
                     producer.flush()
                     print(f"Published updated playlist: {playlist.get('name', 'Unnamed')}")
                 playlists_memory = []
