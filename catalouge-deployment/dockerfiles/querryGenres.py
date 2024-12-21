@@ -1,8 +1,7 @@
-from pyspark.sql import SparkSession, functions as F
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import explode, col
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, LongType, ArrayType, MapType
-from pyspark.sql.functions import desc, asc, col, udf, lit
 from utils import FS, SPARK_ENV, get_spark_context
-import json
 
 schema = StructType([
     StructField("name", StringType(), True),
@@ -37,51 +36,17 @@ schema = StructType([
     StructField("genre_counts", MapType(StringType(), IntegerType()), True),
 ])
 
-THRESHHOLD = 0.01
+def count_distinct_genre_keys(df):
+    genre_keys_df = df.select(explode(col("genre_counts")).alias("genre", "count"))
+    distinct_genres_df = genre_keys_df.select("genre").distinct()
+    
+    distinct_genres_list = distinct_genres_df.rdd.flatMap(lambda x: x).collect()
+    genres_string = ", ".join(distinct_genres_list)
+    
+    print(genres_string)
 
-
-def filter_playlists_by_genres(df, genre1, genre2):
-
-    df_with_genre_check = df.withColumn(
-        "genre1_count", F.when(F.col("genre_counts").getItem(genre1).isNotNull(), F.col("genre_counts").getItem(genre1)).otherwise(0)
-    ).withColumn(
-        "genre2_count", F.when(F.col("genre_counts").getItem(genre2).isNotNull(), F.col("genre_counts").getItem(genre2)).otherwise(0)
-    )
-
-   
-    df_with_percentage = df_with_genre_check.withColumn(
-        "genre1_percentage", F.col("genre1_count") / F.col("num_tracks")
-    ).withColumn(
-        "genre2_percentage", F.col("genre2_count") / F.col("num_tracks")
-    )
-
-    filtered_df = df_with_percentage.filter(
-        (F.col("genre1_percentage") >= THRESHHOLD) &
-        (F.col("genre2_percentage") >= THRESHHOLD)
-    )
-
-    final_df = filtered_df.drop("genre1_count", "genre2_count", "genre1_percentage", "genre2_percentage")
-
-    return final_df
-
-def get_catalouge(genre1, genre2):
+if __name__ == __main__:
     spark= get_spark_context(app_name="Catalouge", config=SPARK_ENV.K8S)
-
     df = spark.read.schema(schema).json(FS)
-    filteret_df = filter_playlists_by_genres(df,genre1,genre2)
-    sorteddf = filteret_df.sort(desc("num_followers"))
-    top_playlists = sorteddf.take(100)
-    
-    dict_response = [row.asDict() for row in top_playlists]
 
-    spark.stop()
-
-    return dict_response
-
-    
-
-   
-    
-if __name__ == "__main__":    
-    get_catalouge("pop", "indie pop")
-
+    count_distinct_genre_keys(df)

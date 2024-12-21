@@ -14,7 +14,7 @@ from pyspark.sql import SparkSession
 locale.getdefaultlocale()
 locale.getpreferredencoding()
 
-FS: str = "hdfs://namenode:9000/topics/test/"
+FS: str = "hdfs://namenode:9000/topics/PLAYLISTS/"
 # Get the IP address of the host machine.
 SPARK_DRIVER_HOST = (
     subprocess.check_output(["hostname", "-i"]).decode(encoding="utf-8").strip()
@@ -48,7 +48,5 @@ def get_spark_context(app_name: str, config: SPARK_ENV, additional_conf: dict = 
         spark_conf.setAll(additional_conf.items())
 
     spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
-
-    spark.sparkContext.setLogLevel(log_level)
 
     return spark
