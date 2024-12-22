@@ -53,3 +53,7 @@ export default defineConfig({
   },
 });
 ```
+
+```bash
+kubectl port-forward svc/catalougeapi 8080:8080
+```

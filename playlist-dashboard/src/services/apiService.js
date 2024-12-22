@@ -9,10 +9,8 @@ const API_BASE_URL = "http://localhost:8080/catalouge";
  * @returns {Promise<Array>} - The API response containing playlist data.
  */
 export async function fetchPlaylistsByGenres(genre1, genre2) {
-  const url = 'http://localhost:8080/catalouge';
-
   const requestBody = {
-    genre1: genre1?.name.toLowerCase() || '', // Use the name property of the genre object
+    genre1: genre1?.name.toLowerCase() || '',
     genre2: genre2?.name.toLowerCase() || '',
   };
 
@@ -22,10 +20,23 @@ export async function fetchPlaylistsByGenres(genre1, genre2) {
         "Content-Type": "application/json",
       },
     });
-    console.log("Request Body:", requestBody); // Log the payload sent to the API
 
-    // Axios automatically parses the JSON response
-    return response.data; // Assuming the API returns an array
+    console.log("Request Body:", requestBody); // Log the payload sent to the API
+    console.log("API Response:", response.data); // Log the raw API response
+
+    // Transform data to include only top 3 genres
+    const playlists = response.data.map((playlist) => ({
+      name: playlist.name,
+      num_followers: playlist.num_followers,
+      num_tracks: playlist.num_tracks,
+      duration_ms: playlist.duration_ms,
+      genres: Object.entries(playlist.genre_counts || {}) // Convert genre_counts object to an array
+        .sort(([, countA], [, countB]) => countB - countA) // Sort by count in descending order
+        .slice(0, 3) // Take the top 3 genres
+        .map(([genre]) => genre), // Extract genre names
+    }));
+
+    return playlists;
   } catch (error) {
     console.error("Error fetching playlists:", error.message);
     throw new Error("Failed to fetch playlists");

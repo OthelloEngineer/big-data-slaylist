@@ -12,10 +12,9 @@ export function PlaylistList({ playlists, loading, error }) {
   };
 
   const formatGenres = (genres) => {
-    return Object.entries(genres) // Convert the object into an array of [genre, count] pairs
-      .sort((a, b) => b[1] - a[1]) // Sort by count in descending order
-      .map(([genre]) => genre) // Extract the genre names only
-      .join(', '); // Join the genres into a comma-separated string
+    if (!genres || !Array.isArray(genres)) return ''; // Ensure genres is an array
+    return genres.join(', '); // Join the genres into a comma-separated string
+    console.log('Genres:', genres);
   };
 
 
@@ -29,10 +28,11 @@ export function PlaylistList({ playlists, loading, error }) {
     */}
   
 
-    // Filter playlists based on the search term
-    const filteredPlaylists = playlists.filter(
-      (playlist) => playlist.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  // Filter playlists based on the search term
+  const filteredPlaylists = playlists.filter((playlist) => {
+    console.log('Genres for playlist', playlist.name, ': ', playlist.genres);
+    return playlist.name?.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   {/* 
   const filteredPlaylists = playlists.filter(playlist =>
@@ -95,30 +95,28 @@ export function PlaylistList({ playlists, loading, error }) {
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {filteredPlaylists.map((playlist) => (
-              <tr key={playlist.pid}>
-                {/* Playlist name */}
+          {filteredPlaylists.map((playlist) => {
+            console.log('Genres for playlist', playlist.name, ': ', playlist.genres); // Debug
+            return (
+              <tr key={playlist.pid}> {/* Key prop added */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                   {playlist.name}
                 </td>
-                {/* Followers */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {playlist.num_followers.toLocaleString()}
                 </td>
-                {/* Tracks */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {playlist.num_tracks}
                 </td>
-                {/* Duration */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {formatDuration(playlist.duration_ms)}
                 </td>
-                {/* Genres */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {formatGenres(playlist.genres)}
+                  {formatGenres(playlist.genres)} {/* Format and display genres */}
                 </td>
               </tr>
-            ))}
+            );
+          })}
           </tbody>
         </table>
       </div>

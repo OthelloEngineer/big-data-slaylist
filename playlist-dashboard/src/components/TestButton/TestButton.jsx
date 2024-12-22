@@ -7,7 +7,7 @@ export function TestButton() {
 
     const requestBody = {
       genre1: 'jazz',
-      genre2: 'indie',
+      genre2: 'rock',
     };
 
     try {
