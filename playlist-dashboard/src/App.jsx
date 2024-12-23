@@ -8,6 +8,8 @@ import { GeneratePlaylist } from './components/GeneratePlaylist/GeneratePlaylist
 import { fetchPlaylistsByGenres } from './services/apiService';
 import { TestButton } from './components/TestButton/TestButton';
 import { PlaylistDetailsModal } from './components/PlaylistList/PlaylistDetailsModal';
+import { About } from './components/About/About';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 //import { fetchPlaylistsByGenres } from './services/api';
 import './index.css';
@@ -81,6 +83,7 @@ function App() {
 
   const [popularitySortOrder, setPopularitySortOrder] = useState('desc'); // Track sorting state: 'desc' or 'asc'
   const [originalPlaylists, setOriginalPlaylists] = useState([]); // To preserve original order
+  const [durationSortOrder, setDurationSortOrder] = useState('desc'); // Track sorting state: 'desc' or 'asc'
 
   useEffect(() => {
     setOriginalPlaylists(playlists); // Keep the original order
@@ -101,21 +104,38 @@ function App() {
     setPopularitySortOrder((prevOrder) => (prevOrder === 'desc' ? 'asc' : 'desc'));
   };
 
+  const sortByDuration = () => {
+    setPlaylists((prev) => {
+      const sorted = [...prev].sort((a, b) => {
+        if (durationSortOrder === 'desc') {
+          return b.duration_ms - a.duration_ms; // Sort by longest duration
+        } else {
+          return a.duration_ms - b.duration_ms; // Sort by shortest duration
+        }
+      });
+      return sorted;
+    });
+    setDurationSortOrder((prevOrder) => (prevOrder === 'desc' ? 'asc' : 'desc'));
+  };
 
   const sortByNewest = () => {
     console.log("Newest filter selected");
     // Placeholder for newest functionality
   };
 
-  const sortByDuration = () => {
-    console.log("Duration filter selected");
-    // Placeholder for duration functionality
-  };
+  
 
   return (
+    <Router>
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <Header />
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <Routes>
+      <Route path="/about" element={<About />} />
+      <Route
+              path="/"
+              element={
+          
         <div className="flex gap-6">
           {/* Main Content */}
           <div className="flex-1">
@@ -181,8 +201,12 @@ function App() {
             </div>
           </div>
         </div>
+              }
+        />
+      </Routes>  
       </main>
     </div>
+    </Router>
   );
 }
 
