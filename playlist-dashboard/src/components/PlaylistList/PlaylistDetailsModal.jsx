@@ -4,15 +4,22 @@ export const PlaylistDetailsModal = ({ playlist, onClose }) => {
   if (!playlist) return null; // Don't render if no playlist is selected
 
   const formatDuration = (ms) => {
-    const minutes = Math.floor(ms / 60000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
     const seconds = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
-    return `${minutes}:${seconds}`;
+    return `${minutes.toString().padStart(2, '0')}:${seconds}`;
   };
   console.log('Selected Playlist:', playlist);
 
+    // Format duration as hh:mm:ss for the playlist
+    const formatDurationHHMMSS = (ms) => {
+        const hours = Math.floor(ms / 3600000);
+        const minutes = Math.floor((ms % 3600000) / 60000);
+        const seconds = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds}`;
+        };
+
   // Fallback to an empty array if tracks are missing
   const tracks = playlist.tracks || [];
-
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -33,7 +40,7 @@ export const PlaylistDetailsModal = ({ playlist, onClose }) => {
           Tracks: {playlist.num_tracks}
         </p>
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-          Duration: {formatDuration(playlist.duration_ms)}
+          Duration: {formatDurationHHMMSS(playlist.duration_ms)}
         </p>
         <h3 className="text-xl font-semibold mb-4 dark:text-white">
           Tracks

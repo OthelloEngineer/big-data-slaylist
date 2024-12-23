@@ -6,9 +6,10 @@ export function PlaylistList({ playlists, loading, error, onPlaylistSelect }) {
 
   // Format duration from milliseconds to MM:SS format
   const formatDuration = (ms) => {
-    const minutes = Math.floor(ms / 60000);
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
     const seconds = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
-    return `${minutes}:${seconds}`;
+    return `${hours}:${minutes}:${seconds}`;
   };
 
   const formatGenres = (genres) => {
