@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
-export function PlaylistList({ playlists, loading, error }) {
+export function PlaylistList({ playlists, loading, error, onPlaylistSelect }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Format duration from milliseconds to MM:SS format
@@ -98,7 +98,10 @@ export function PlaylistList({ playlists, loading, error }) {
           {filteredPlaylists.map((playlist) => {
             console.log('Genres for playlist', playlist.name, ': ', playlist.genres); // Debug
             return (
-              <tr key={playlist.pid}> {/* Key prop added */}
+              <tr key={playlist.pid}
+              className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => onPlaylistSelect(playlist)} // Pass playlist to parent
+              >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                   {playlist.name}
                 </td>

@@ -7,7 +7,7 @@ import { SingleGenreSelector } from './components/SingleGenreSelector/SingleGenr
 import { GeneratePlaylist } from './components/GeneratePlaylist/GeneratePlaylist';
 import { fetchPlaylistsByGenres } from './services/apiService';
 import { TestButton } from './components/TestButton/TestButton';
-
+import { PlaylistDetailsModal } from './components/PlaylistList/PlaylistDetailsModal';
 
 //import { fetchPlaylistsByGenres } from './services/api';
 import './index.css';
@@ -20,6 +20,7 @@ function App() {
   const [genre1, setGenre1] = useState(null);
   const [genre2, setGenre2] = useState(null);
 
+  const [selectedPlaylist, setSelectedPlaylist] = useState(null);
   
 
   // Combine selected genres to check the Generate button's state
@@ -106,6 +107,11 @@ function App() {
     // Placeholder for newest functionality
   };
 
+  const sortByDuration = () => {
+    console.log("Duration filter selected");
+    // Placeholder for duration functionality
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <Header />
@@ -149,6 +155,7 @@ function App() {
                 <SidebarFilter
                   onPopularityFilter={sortByPopularity}
                   onNewestFilter={sortByNewest}
+                  onDurationFilter={sortByDuration}
                 />
               </div>
               
@@ -159,9 +166,17 @@ function App() {
                     playlists={playlists}
                     loading={loading}
                     error={error}
+                    onPlaylistSelect={setSelectedPlaylist}
                   />
                 </div>
               </div>
+              {/* Render Modal */}
+              {selectedPlaylist && (
+                <PlaylistDetailsModal
+                  playlist={selectedPlaylist}
+                  onClose={() => setSelectedPlaylist(null)}
+                />
+              )}
               <TestButton />
             </div>
           </div>
