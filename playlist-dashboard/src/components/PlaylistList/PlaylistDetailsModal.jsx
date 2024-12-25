@@ -74,10 +74,23 @@ export const PlaylistDetailsModal = ({ playlist, onClose, selectedGenres = [] })
       .map(([genre, count]) => `${genre} (${count})`)
       .join(', ');
 
+    // Handle outside click to close modal
+  const handleOutsideClick = (e) => {
+    if (e.target.id === 'modal-overlay') {
+      onClose();
+    }
+  };
+
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-3xl w-full relative">
+    <div
+    id="modal-overlay"
+        className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+        onClick={handleOutsideClick}>
+    
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-3xl w-full relative"
+      onClick={(e) => e.stopPropagation()}
+      >
         <button
           className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:text-gray-300"
           onClick={onClose}
