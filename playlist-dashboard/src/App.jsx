@@ -83,7 +83,8 @@ function App() {
 
   const [popularitySortOrder, setPopularitySortOrder] = useState('desc'); // Track sorting state: 'desc' or 'asc'
   const [originalPlaylists, setOriginalPlaylists] = useState([]); // To preserve original order
-  const [durationSortOrder, setDurationSortOrder] = useState('desc'); // Track sorting state: 'desc' or 'asc'
+  const [durationSortOrder, setDurationSortOrder] = useState('desc'); 
+  const [modifiedOrder, setModifiedOrder] = useState('desc'); 
 
   useEffect(() => {
     setOriginalPlaylists(playlists); // Keep the original order
@@ -104,6 +105,20 @@ function App() {
     setPopularitySortOrder((prevOrder) => (prevOrder === 'desc' ? 'asc' : 'desc'));
   };
 
+  const [modifiedSortOrder, setModifiedSortOrder] = useState('asc');
+
+const sortByModified = () => {
+  setPlaylists((prev) => {
+    const sorted = [...prev].sort((a, b) => {
+      return modifiedSortOrder === 'asc'
+        ? a.modified_at - b.modified_at // Ascending
+        : b.modified_at - a.modified_at; // Descending
+    });
+    return sorted;
+  });
+  setModifiedSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc')); // Toggle order
+};
+
   const sortByDuration = () => {
     setPlaylists((prev) => {
       const sorted = [...prev].sort((a, b) => {
@@ -116,11 +131,6 @@ function App() {
       return sorted;
     });
     setDurationSortOrder((prevOrder) => (prevOrder === 'desc' ? 'asc' : 'desc'));
-  };
-
-  const sortByNewest = () => {
-    console.log("Newest filter selected");
-    // Placeholder for newest functionality
   };
 
   const sortByRelevance = () => {
@@ -176,12 +186,6 @@ function App() {
         
       </div>
       <GeneratePlaylist disabled={singleSelectedGenres.length < 2} genre1={genre1} genre2={genre2} />
-      {/**
-            <GenreSelector
-              selected={singleSelectedGenres}
-              onChange={handleGenreChange}
-            />
-           */  }
 
             {/*Search and filter */}
             <div className="flex flex-col lg:flex-row">
@@ -189,7 +193,7 @@ function App() {
               <div className="lg:w-1/6 p-4 mt-6">
                 <SidebarFilter
                   onPopularityFilter={sortByPopularity}
-                  onNewestFilter={sortByNewest}
+                  onNewestFilter={sortByModified}
                   onDurationFilter={sortByDuration}
                   onRelevanceFilter={sortByRelevance}
                 />
@@ -203,7 +207,7 @@ function App() {
                     loading={loading}
                     error={error}
                     onPlaylistSelect={setSelectedPlaylist}
-                    selectedGenres={selectedGenres} // Pass selectedGenres as a prop
+                    selectedGenres={selectedGenres}
                   />
                 </div>
               </div>

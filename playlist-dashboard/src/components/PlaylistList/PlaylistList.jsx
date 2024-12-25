@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 export function PlaylistList({ playlists, loading, error, onPlaylistSelect }) {
@@ -18,15 +18,15 @@ export function PlaylistList({ playlists, loading, error, onPlaylistSelect }) {
     console.log('Genres:', genres);
   };
 
-
-  {/**
-    // Generate genre list from genres object
-  const formatGenres = (genres) => {
-    return Object.keys(genres)
-    .map((genre) => `${genre} (${genres[genre]})`)
-    .join(', ');
+  // Sort playlists by modified_at
+  const sortPlaylistsByModifiedAt = (order) => {
+    return [...playlists].sort((a, b) => {
+      if (order === 'asc') {
+        return a.modified_at - b.modified_at; // Ascending
+      }
+      return b.modified_at - a.modified_at; // Descending
+    });
   };
-    */}
   
 
   // Filter playlists based on the search term
@@ -35,13 +35,6 @@ export function PlaylistList({ playlists, loading, error, onPlaylistSelect }) {
     return playlist.name?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  {/* 
-  const filteredPlaylists = playlists.filter(playlist =>
-    playlist.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    playlist.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    playlist.genre.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  **/}
 
   if (loading) {
     return (

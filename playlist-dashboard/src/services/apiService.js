@@ -30,6 +30,7 @@ export async function fetchPlaylistsByGenres(genre1, genre2) {
       num_followers: playlist.num_followers,
       num_tracks: playlist.num_tracks,
       duration_ms: playlist.duration_ms,
+      modified_at: playlist.modified_at,
       genres: Object.entries(playlist.genre_counts || {}) // Convert genre_counts object to an array
         .sort(([, countA], [, countB]) => countB - countA) // Sort by count in descending order
         .slice(0, 3) // Take the top 3 genres

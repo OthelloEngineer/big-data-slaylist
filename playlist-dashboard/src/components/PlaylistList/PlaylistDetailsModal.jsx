@@ -20,6 +20,15 @@ export const PlaylistDetailsModal = ({ playlist, onClose, selectedGenres = [] })
         return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds}`;
         };
 
+    // Convert UNIX timestamp to a readable date
+  const formatModifiedDate = (timestamp) => {
+    if (!timestamp) return 'Unknown Date'; // Handle missing timestamp
+    const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
+    return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString(); // Validate and format
+  };
+
+  console.log('Modified At:', playlist.modified_at); // Debug modified_at value
+
   // Fallback to an empty array if tracks are missing
   const tracks = playlist.tracks || [];
 
@@ -108,6 +117,9 @@ export const PlaylistDetailsModal = ({ playlist, onClose, selectedGenres = [] })
         </p>
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
           Duration: {formatDurationHHMMSS(playlist.duration_ms)}
+        </p>
+        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+          Modified At: {formatModifiedDate(playlist.modified_at)}
         </p>
         <h3 className="text-xl font-semibold mb-4 dark:text-white">
           Tracks
