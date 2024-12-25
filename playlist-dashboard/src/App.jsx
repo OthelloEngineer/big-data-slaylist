@@ -123,7 +123,22 @@ function App() {
     // Placeholder for newest functionality
   };
 
-  
+  const sortByRelevance = () => {
+    setPlaylists((prev) => {
+      const sorted = [...prev].sort((a, b) => {
+        const calculateRelevance = (playlist) => {
+          const playlistGenres = playlist.genres || [];
+          const relevantCount = playlistGenres.filter((genre) =>
+            selectedGenres.some((selected) => selected?.name?.toLowerCase() === genre.toLowerCase())
+          ).length;
+          return selectedGenres.length > 0 ? relevantCount / selectedGenres.length : 0; // Avoid division by zero
+        };
+        return calculateRelevance(b) - calculateRelevance(a);
+      });
+      return sorted;
+    });
+  };
+
 
   return (
     <Router>
@@ -176,6 +191,7 @@ function App() {
                   onPopularityFilter={sortByPopularity}
                   onNewestFilter={sortByNewest}
                   onDurationFilter={sortByDuration}
+                  onRelevanceFilter={sortByRelevance}
                 />
               </div>
               
@@ -187,6 +203,7 @@ function App() {
                     loading={loading}
                     error={error}
                     onPlaylistSelect={setSelectedPlaylist}
+                    selectedGenres={selectedGenres} // Pass selectedGenres as a prop
                   />
                 </div>
               </div>
@@ -194,6 +211,7 @@ function App() {
               {selectedPlaylist && (
                 <PlaylistDetailsModal
                   playlist={selectedPlaylist}
+                  selectedGenres={selectedGenres}
                   onClose={() => setSelectedPlaylist(null)}
                 />
               )}

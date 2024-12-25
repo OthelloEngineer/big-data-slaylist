@@ -1,6 +1,8 @@
-import React from 'react';
+import {React, useState} from 'react';
 
-export const PlaylistDetailsModal = ({ playlist, onClose }) => {
+export const PlaylistDetailsModal = ({ playlist, onClose, selectedGenres = [] }) => {
+
+  const [showAllGenres, setShowAllGenres] = useState(false); // State to toggle genres
   if (!playlist) return null; // Don't render if no playlist is selected
 
   const formatDuration = (ms) => {
@@ -20,6 +22,58 @@ export const PlaylistDetailsModal = ({ playlist, onClose }) => {
 
   // Fallback to an empty array if tracks are missing
   const tracks = playlist.tracks || [];
+
+  // Calculate relevance score
+  const calculateRelevanceScore = (genreCounts = {}) => {
+    if (!selectedGenres.length) return 0;
+  
+    const totalMatches = selectedGenres.reduce((total, selectedGenre) => {
+      const genreName = selectedGenre?.name?.toLowerCase();
+  
+      const genreRegex = new RegExp(`\\b${genreName}\\b`, 'i'); // Match whole words, case-insensitive
+  
+      // Sum up matches where raw genre matches the regex
+      const genreMatchCount = Object.entries(genreCounts).reduce((matchSum, [rawGenre, count]) => {
+        if (genreRegex.test(rawGenre)) {
+          return matchSum + count;
+        }
+        return matchSum;
+      }, 0);
+  
+      return total + genreMatchCount;
+    }, 0);
+  
+    const totalGenreCount = Object.values(genreCounts).reduce((sum, count) => sum + count, 0);
+    return totalGenreCount > 0 ? (totalMatches / totalGenreCount) * 100 : 0;
+  };
+  
+  const genreCounts = playlist.genre_counts || {}; // Fallback to empty object if missing
+  const relevanceScore = calculateRelevanceScore(genreCounts);
+  
+  const matchingGenres = selectedGenres
+    .filter((genre) => {
+      const genreRegex = new RegExp(`\\b${genre?.name?.toLowerCase()}\\b`, 'i');
+      return Object.keys(genreCounts).some((rawGenre) => genreRegex.test(rawGenre));
+    })
+    .map(
+      (genre) =>
+        `${genre.name} (${Object.entries(genreCounts)
+          .filter(([rawGenre]) => new RegExp(`\\b${genre.name.toLowerCase()}\\b`, 'i').test(rawGenre))
+          .reduce((sum, [, count]) => sum + count, 0)})`
+    )
+    .join(', ');
+  
+    const sortedGenres = Object.entries(genreCounts).sort(([, countA], [, countB]) => countB - countA);
+
+    // Show top 10 or all genres based on the toggle state
+    const displayedGenres = showAllGenres
+      ? sortedGenres
+      : sortedGenres.slice(0, 3);
+  
+    const rawGenres = displayedGenres
+      .map(([genre, count]) => `${genre} (${count})`)
+      .join(', ');
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -45,6 +99,22 @@ export const PlaylistDetailsModal = ({ playlist, onClose }) => {
         <h3 className="text-xl font-semibold mb-4 dark:text-white">
           Tracks
         </h3>
+
+        <h3 className="text-lg font-semibold mb-2 dark:text-white">Relevance</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+          Relevance Score: {relevanceScore.toFixed(1)}%
+        </p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Matching Genres: {matchingGenres || 'No matching genres'}
+        </p>
+        <h3
+          className="text-lg font-semibold mt-4 dark:text-indigo-400 cursor-pointer hover:text-indigo-600"
+          onClick={() => setShowAllGenres((prev) => !prev)}
+        >
+          {showAllGenres ? 'Hide Genres' : 'Show All Genres'}
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{rawGenres || 'No genres available'}</p>
+
         <div className="overflow-y-auto max-h-60">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">

@@ -34,6 +34,7 @@ export async function fetchPlaylistsByGenres(genre1, genre2) {
         .sort(([, countA], [, countB]) => countB - countA) // Sort by count in descending order
         .slice(0, 3) // Take the top 3 genres
         .map(([genre]) => genre), // Extract genre names
+        genre_counts: playlist.genre_counts || {}, // Include the full genre_counts object
         tracks: playlist.tracks || [], // Include tracks in the transformed data
     }));
 
