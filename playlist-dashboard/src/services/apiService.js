@@ -21,8 +21,8 @@ export async function fetchPlaylistsByGenres(genre1, genre2) {
       },
     });
 
-    console.log("Request Body:", requestBody); // Log the payload sent to the API
-    console.log("API Response:", response.data); // Log the raw API response
+    //console.log("Request Body:", requestBody); // Log the payload sent to the API
+    //console.log("API Response:", response.data); // Log the raw API response
 
     // Transform data to include only top 3 genres
     const playlists = response.data.map((playlist) => ({

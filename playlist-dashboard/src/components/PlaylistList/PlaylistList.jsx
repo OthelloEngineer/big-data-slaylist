@@ -15,23 +15,13 @@ export function PlaylistList({ playlists, loading, error, onPlaylistSelect }) {
   const formatGenres = (genres) => {
     if (!genres || !Array.isArray(genres)) return ''; // Ensure genres is an array
     return genres.join(', '); // Join the genres into a comma-separated string
-    console.log('Genres:', genres);
   };
 
-  // Sort playlists by modified_at
-  const sortPlaylistsByModifiedAt = (order) => {
-    return [...playlists].sort((a, b) => {
-      if (order === 'asc') {
-        return a.modified_at - b.modified_at; // Ascending
-      }
-      return b.modified_at - a.modified_at; // Descending
-    });
-  };
   
 
   // Filter playlists based on the search term
   const filteredPlaylists = playlists.filter((playlist) => {
-    console.log('Genres for playlist', playlist.name, ': ', playlist.genres);
+    //console.log('Genres for playlist', playlist.name, ': ', playlist.genres);
     return playlist.name?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -90,7 +80,7 @@ export function PlaylistList({ playlists, loading, error, onPlaylistSelect }) {
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           {filteredPlaylists.map((playlist) => {
-            console.log('Genres for playlist', playlist.name, ': ', playlist.genres); // Debug
+            {/** console.log('Genres for playlist', playlist.name, ': ', playlist.genres); // Debug */} 
             return (
               <tr key={playlist.pid}
               className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Header } from './components/Header/Header';
-import { GenreSelector } from './components/GenreSelector/GenreSelector';
 import { PlaylistList } from './components/PlaylistList/PlaylistList';
 import { SidebarFilter } from './components/SidebarFilter/SidebarFilter';
 import { SingleGenreSelector } from './components/SingleGenreSelector/SingleGenreSelector';
@@ -34,23 +33,6 @@ function App() {
     setSelectedGenres(newSelected);
   }, [genre1, genre2]);
 
-  const isGenreSelected = (genre) =>
-    selectedGenres.some((g) => g.id === genre.id);
-
-  const handleFetchPlaylists = async (genre1, genre2) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const data = await fetchPlaylistsByGenres(genre1, genre2);
-      setPlaylists(data);
-    } catch (err) {
-      console.error("Error fetching playlists:", err.message);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     const fetchPlaylists = async () => {
@@ -84,7 +66,6 @@ function App() {
   const [popularitySortOrder, setPopularitySortOrder] = useState('desc'); // Track sorting state: 'desc' or 'asc'
   const [originalPlaylists, setOriginalPlaylists] = useState([]); // To preserve original order
   const [durationSortOrder, setDurationSortOrder] = useState('desc'); 
-  const [modifiedOrder, setModifiedOrder] = useState('desc'); 
 
   useEffect(() => {
     setOriginalPlaylists(playlists); // Keep the original order
@@ -219,7 +200,9 @@ const sortByModified = () => {
                   onClose={() => setSelectedPlaylist(null)}
                 />
               )}
+              {/* Test API Button 
               <TestButton />
+              */}
             </div>
           </div>
         </div>

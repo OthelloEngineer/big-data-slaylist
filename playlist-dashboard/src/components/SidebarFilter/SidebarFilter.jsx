@@ -10,7 +10,7 @@ export function SidebarFilter({ onPopularityFilter, onNewestFilter, onDurationFi
                      bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-indigo-500 hover:text-white"
           onClick={onPopularityFilter}
         >
-          Popularity
+          Followers
         </button>
         <button
           className="w-full px-3 py-2 text-left rounded-md text-sm font-medium transition-colors duration-200

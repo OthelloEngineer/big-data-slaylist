@@ -10,7 +10,6 @@ export const PlaylistDetailsModal = ({ playlist, onClose, selectedGenres = [] })
     const seconds = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
     return `${minutes.toString().padStart(2, '0')}:${seconds}`;
   };
-  console.log('Selected Playlist:', playlist);
 
     // Format duration as hh:mm:ss for the playlist
     const formatDurationHHMMSS = (ms) => {
@@ -27,7 +26,6 @@ export const PlaylistDetailsModal = ({ playlist, onClose, selectedGenres = [] })
     return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString(); // Validate and format
   };
 
-  console.log('Modified At:', playlist.modified_at); // Debug modified_at value
 
   // Fallback to an empty array if tracks are missing
   const tracks = playlist.tracks || [];
