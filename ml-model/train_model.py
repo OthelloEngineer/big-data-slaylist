@@ -44,6 +44,9 @@ schema = StructType([
 
 
 def data_preprocessing(df):
+
+    df = df.fillna({"num_followers": 0, "popularity": 0, "artist_name": "unknown"})
+
     # creates a flat structure for the data
     exploded_tracks = df.select(
         explode(col("tracks")).alias("track"),
