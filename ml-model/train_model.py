@@ -120,15 +120,15 @@ def train_model():
         print("Residuals Sample:")
         summary.residuals.show(5)
 
-    model_save_path = "hdfs://namenode:9000/models/"
-    print(f"Saving the model to {model_save_path}...")
-    lr_model.save(model_save_path)
-    print("Model saved successfully.")
-
     print("Generating predictions...")
     predictions = lr_model.transform(test_data)
     predictions.select("features", "popularity", "prediction").show(10, truncate=False)
     print("Predictions displayed.")
+
+    model_save_path = "hdfs://namenode:9000/models/"
+    print(f"Saving the model to {model_save_path}...")
+    lr_model.save(model_save_path)
+    print("Model saved successfully.")
 
     print("Stopping the Spark session.")
     spark.stop()
