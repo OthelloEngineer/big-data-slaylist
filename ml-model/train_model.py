@@ -90,7 +90,14 @@ def train_model():
     lr = LinearRegression(featuresCol="features", labelCol="popularity", regParam=0.1)
     lr_model = lr.fit(train_data)
 
+    model_save_path = "hdfs://namenode:9000/models/"
+    lr_model.save(model_save_path)
+
     predictions = lr_model.transform(test_data)
     predictions.select("features", "popularity", "prediction").show(10, truncate=False)
 
     spark.stop()
+
+
+if __name__ == "__main__":    
+    train_model()
