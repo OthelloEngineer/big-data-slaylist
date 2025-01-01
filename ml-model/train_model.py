@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, LongType, ArrayType, MapType
 from pyspark.sql.functions import col, lit, rand, explode, array, concat_ws
 from pyspark.ml.feature import StringIndexer, VectorAssembler
-from pyspark.ml.regression import LinearRegression
+from pyspark.ml.regression import LinearRegression, LinearRegressionTrainingSummary
 from pyspark.ml import Pipeline, PipelineModel
 from utils import FS, SPARK_ENV, get_spark_context
 import random
@@ -81,21 +81,46 @@ def train_test_split(preprocessed_data):
 
 
 def train_model():
-    spark= get_spark_context(app_name="MLModel", config=SPARK_ENV.K8S)
+    spark = get_spark_context(app_name="MLModel", config=SPARK_ENV.K8S)
     
+    print("Starting the Spark session...")
     df = spark.read.schema(schema).json(FS)
+    
+    print("Performing data preprocessing...")
     preprocessed_data = data_preprocessing(df)
     train_data, test_data = train_test_split(preprocessed_data)
-
+    print("Data preprocessing completed.")
+    
+    print("Training the Linear Regression model...")
     lr = LinearRegression(featuresCol="features", labelCol="popularity", regParam=0.1)
     lr_model = lr.fit(train_data)
 
-    model_save_path = "hdfs://namenode:9000/models/"
-    lr_model.save(model_save_path)
+    # Logging model information
+    print("\nModel training completed.")
+    print(f"Model Coefficients: {lr_model.coefficients}")
+    print(f"Model Intercept: {lr_model.intercept}")
+    
+    if hasattr(lr_model, 'summary'):
+        summary: LinearRegressionTrainingSummary = lr_model.summary
+        print("\nTraining Summary:")
+        print(f"Number of Iterations: {summary.totalIterations}")
+        print(f"Root Mean Squared Error (RMSE): {summary.rootMeanSquaredError}")
+        print(f"R2 Score: {summary.r2}")
+        print(f"Explained Variance: {summary.explainedVariance}")
+        print("Residuals Sample:")
+        summary.residuals.show(5)
 
+    model_save_path = "hdfs://namenode:9000/models/"
+    print(f"Saving the model to {model_save_path}...")
+    lr_model.save(model_save_path)
+    print("Model saved successfully.")
+
+    print("Generating predictions...")
     predictions = lr_model.transform(test_data)
     predictions.select("features", "popularity", "prediction").show(10, truncate=False)
+    print("Predictions displayed.")
 
+    print("Stopping the Spark session.")
     spark.stop()
 
 
