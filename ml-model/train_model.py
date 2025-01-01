@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, LongType, ArrayType, MapType
-from pyspark.sql.functions import col, lit, rand, explode, array, concat_ws
+from pyspark.sql.functions import col, lit, rand, explode, array, concat_ws, when, size
 from pyspark.ml.feature import StringIndexer, VectorAssembler
 from pyspark.ml.regression import LinearRegression, LinearRegressionTrainingSummary
 from pyspark.ml import Pipeline, PipelineModel
@@ -59,6 +59,12 @@ def data_preprocessing(df):
 
     # Drop rows with null values after explosion
     exploded_tracks = exploded_tracks.dropna(how='any')
+
+    # Replace empty genres with 'unknown'
+    exploded_tracks = exploded_tracks.withColumn(
+        "genres", 
+        when(col("genres").isNull() | (size(col("genres")) == 0), lit(["unknown"])).otherwise(col("genres"))
+    )
 
     # converts genres array into a string
     exploded_tracks = exploded_tracks.withColumn("genres_str", concat_ws(",", col("genres")))
