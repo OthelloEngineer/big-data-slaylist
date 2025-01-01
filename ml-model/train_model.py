@@ -45,43 +45,8 @@ schema = StructType([
 
 def data_preprocessing(df):
     
-    # Fill null values in the DataFrame with appropriate defaults
-    df = df.fillna({
-        "name": "unknown",                 # Default for playlist name
-        "collaborative": "false",         # Default for collaborative flag
-        "pid": 0,                         # Default for playlist ID
-        "modified_at": 0,                 # Default for modification timestamp
-        "num_tracks": 0,                  # Default for number of tracks
-        "num_albums": 0,                  # Default for number of albums
-        "num_followers": 0,               # Default for followers count
-        "tracks": [],                     # Default for track list
-        "num_edits": 0,                   # Default for number of edits
-        "duration_ms": 0,                 # Default for total duration
-        "num_artists": 0,                 # Default for number of artists
-        "origin": "unknown",              # Default for origin
-        "genre_counts": {},               # Default for genre counts
-    })
-
-    # Fill nested null values within the `tracks` field
-    df = df.withColumn(
-        "tracks",
-        explode(
-            col("tracks")
-        ).alias("track")
-    ).fillna({
-        "track.pos": 0,
-        "track.artist_name": "unknown",
-        "track.track_uri": "unknown",
-        "track.artist_uri": "unknown",
-        "track.track_name": "unknown",
-        "track.album_uri": "unknown",
-        "track.duration_ms": 0,
-        "track.album_name": "unknown",
-        "track.artist_data.genres": [],
-        "track.artist_data.name": "unknown",
-        "track.artist_data.popularity": 0,
-        "track.artist_data.uri": "unknown",
-    })
+    # Remove rows with any null values in the selected columns
+    df = df.dropna(how='any')  # This will drop rows with any null values in any column
 
     # creates a flat structure for the data
     exploded_tracks = df.select(
