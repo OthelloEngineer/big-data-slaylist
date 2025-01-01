@@ -44,9 +44,6 @@ schema = StructType([
 
 
 def data_preprocessing(df):
-    
-    # Remove rows with any null values in the selected columns
-    df = df.dropna(how='any')  # This will drop rows with any null values in any column
 
     # creates a flat structure for the data
     exploded_tracks = df.select(
@@ -59,6 +56,9 @@ def data_preprocessing(df):
         col("track.artist_data.popularity").alias("popularity"),
         col("num_followers"),
     )
+
+    # Drop rows with null values after explosion
+    exploded_tracks = exploded_tracks.dropna(how='any')
 
     # converts genres array into a string
     exploded_tracks = exploded_tracks.withColumn("genres_str", concat_ws(",", col("genres")))
