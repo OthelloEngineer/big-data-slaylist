@@ -1,7 +1,6 @@
 import axios from "axios";
 
-// idk man
-// just 'run npm dev' in the playlist-dashboard directory locally
+// 'run npm dev' in the playlist-dashboard directory locally
 // kubectl port-forward svc/catalougeapi 8080:8080
 const API_BASE_URL = "http://localhost:8080/catalouge";
 

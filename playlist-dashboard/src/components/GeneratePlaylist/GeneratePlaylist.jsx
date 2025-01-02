@@ -7,7 +7,7 @@ export function GeneratePlaylist({ disabled, genre1, genre2, playlists }) {
   const [currentCount, setCurrentCount] = useState(10);
   const [genreWeight, setGenreWeight] = useState(50);
   const [popularityWeight, setPopularityWeight] = useState(50);
-  const [showSliders, setShowSliders] = useState(false); // New state to control slider visibility
+  const [showSliders, setShowSliders] = useState(false);
 
   const generatePlaylistName = (genre1, genre2) => {
     if (!genre1 || !genre2) return "New Playlist";
@@ -38,10 +38,17 @@ export function GeneratePlaylist({ disabled, genre1, genre2, playlists }) {
         genreWeight,
         popularityWeight
       );
-      setPlaylistName(generatePlaylistName(genre1, genre2));
+      if (playlist.length === 0) {
+        // Only set a new name if it's the first generation
+        setPlaylistName(generatePlaylistName(genre1, genre2));
+      }
       setPlaylist(generatedPlaylist);
       setShowSliders(true); // Show sliders when the playlist is generated
     }
+  };
+
+  const handleRegenerateName = () => {
+    setPlaylistName(generatePlaylistName(genre1, genre2));
   };
 
   const handleLoadMore = () => {
@@ -158,13 +165,24 @@ export function GeneratePlaylist({ disabled, genre1, genre2, playlists }) {
   return (
     <div className="mt-6 bg-gray-100 dark:bg-gray-900 flex flex-col items-center">
       <div className="w-full max-w-4xl bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+        {/* Playlist Name */}
+        {playlist.length > 0 && (
+          <h3
+            className="text-lg font-semibold text-gray-900 dark:text-white text-center mb-4 cursor-pointer"
+            onClick={handleRegenerateName}
+            title="Click to regenerate name"
+          >
+            {playlistName}
+          </h3>
+        )}
+
         {/* Sliders */}
         {showSliders && (
           <>
             <div className="mb-6">
               <label className="block text-gray-700 dark:text-gray-300 mb-2">
                 Genre Weight ({100 - genreWeight}% {genre1?.name || "Genre 1"} /{" "}
-                {genreWeight}% {genre2?.name || "Genre 2"})
+                {genreWeight}% {genre2?.name || "Genre 2"} )
               </label>
               <input
                 type="range"
