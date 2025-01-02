@@ -29,16 +29,18 @@ export function Header() {
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Playlist Dashboard
+              Slaylist Dashboard
             </h1>
           </div>
           <div className="flex items-center space-x-4">
             <a href="/" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
               Home
             </a>
+            {/* About 
             <a href="/about" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
               About
             </a>
+            */}
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
