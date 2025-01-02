@@ -20,9 +20,10 @@ export function GeneratedPlaylist({ playlist, onRemove }) {
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
               Genre
             </th>
+            {/* Streams 
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
               Streams
-            </th>
+            </th>*/}
 
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
               Actions
@@ -49,9 +50,11 @@ export function GeneratedPlaylist({ playlist, onRemove }) {
               <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                 {song.genre}
               </td>
+              {/* Streams 
               <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                 {song.streams}
               </td>
+              */}
 
               {/* Actions */}
               <td className="px-4 py-3 space-x-4 flex justify-center items-center">

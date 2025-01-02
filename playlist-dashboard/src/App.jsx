@@ -166,7 +166,9 @@ const sortByModified = () => {
         />
         
       </div>
-      <GeneratePlaylist disabled={singleSelectedGenres.length < 2} genre1={genre1} genre2={genre2} playlists={playlists} />
+      <div className="flex justify-center mt-6">
+      <GeneratePlaylist disabled={loading || singleSelectedGenres.length < 2} genre1={genre1} genre2={genre2} playlists={playlists} />
+      </div>
 
             {/*Search and filter */}
             <div className="flex flex-col lg:flex-row">
