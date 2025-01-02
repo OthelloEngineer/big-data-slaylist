@@ -1,5 +1,5 @@
 import React from "react";
-import { PlayIcon, TrashIcon, HeartIcon } from "@heroicons/react/20/solid";
+import { TrashIcon } from "@heroicons/react/20/solid";
 
 export function GeneratedPlaylist({ playlist, onRemove }) {
   return (
@@ -23,9 +23,7 @@ export function GeneratedPlaylist({ playlist, onRemove }) {
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
               Streams
             </th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-              Release Date
-            </th>
+
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
               Actions
             </th>
@@ -51,19 +49,15 @@ export function GeneratedPlaylist({ playlist, onRemove }) {
               <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
                 {song.genre}
               </td>
-              {/* Streams */}
               <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                {song.streams.toLocaleString()} {/* Add commas for thousands */}
+                {song.streams}
               </td>
-              {/* Release Date */}
-              <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                {song.releaseDate}
-              </td>
+
               {/* Actions */}
               <td className="px-4 py-3 space-x-4 flex justify-center items-center">
-                <button 
-                className="text-red-600 hover:text-red-800"
-                onClick={() => onRemove(song.id)}
+                <button
+                  className="text-red-600 hover:text-red-800"
+                  onClick={() => onRemove(song.id)}
                 >
                   <TrashIcon className="h-5 w-5" title="Remove" />
                 </button>

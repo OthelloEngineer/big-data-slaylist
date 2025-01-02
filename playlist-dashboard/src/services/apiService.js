@@ -1,6 +1,12 @@
 import axios from "axios";
 
-const API_BASE_URL = "catalougeapi:8080/catalouge";
+// idk man
+// just 'run npm dev' in the playlist-dashboard directory locally
+// kubectl port-forward svc/catalougeapi 8080:8080
+const API_BASE_URL = "http://localhost:8080/catalouge";
+
+// doesnt work:
+// const API_BASE_URL = "catalougeapi:8080/catalouge";
 
 /**
  * Fetch playlists based on genres.
@@ -22,7 +28,7 @@ export async function fetchPlaylistsByGenres(genre1, genre2) {
     });
 
     //console.log("Request Body:", requestBody); // Log the payload sent to the API
-    //console.log("API Response:", response.data); // Log the raw API response
+    console.log("API Response:", response.data); // Log the raw API response
 
     // Transform data to include only top 3 genres
     const playlists = response.data.map((playlist) => ({
